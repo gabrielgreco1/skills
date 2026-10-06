@@ -16,4 +16,5 @@ D=$(cd "$(dirname "$0")/.." && pwd)
 python3 -c "import mlx_whisper" 2>/dev/null || echo "optional: pip3 install mlx-whisper   (qc_video.py transcript check, Apple Silicon)"
 python3 -c "import rembg" 2>/dev/null || echo "optional: pip3 install rembg   (cut objects out of real photos)"
 [ -f ~/.config/elevenlabs/api_key ] || [ -n "$ELEVENLABS_API_KEY" ] || echo "optional: ElevenLabs key not set (free edge-tts will be used unless the user provides one)"
+command -v potrace >/dev/null || echo "optional: brew install potrace   (vectorize_logo.sh, crisp logos for beat edits)"
 [ $miss = 0 ] && echo "toolchain OK" || exit 1

@@ -1,6 +1,6 @@
 ---
 name: motion-designer
-description: Senior motion designer that turns any product website — or any story/topic — into short, shareable motion-graphics videos (15–90 s showreels, teasers, meme/parody shorts, data stories) — rendered as real MP4s sized for LinkedIn, Instagram, X and Reels/TikTok, with optional sound design and narration. Starts with a short guided intake (language first — Portuguese, English, Spanish or other — then product or story, look, idea, versions, sound, narration, platform, duration, visuals, CTA, narration engine, voice, captions, hook, retention, pacing, QC), extracts the brand straight from the site, generates several versions in parallel, reveals them in Finder and asks which one is best. Use whenever the user wants a motion video, animated reel, promo/teaser clip, social video, animated explainer or "showreel" for a product, a website or a story/topic.
+description: Senior motion designer that turns any product website, any story/topic, or any song into short, shareable motion-graphics videos (15–90 s showreels, teasers, meme/parody shorts, data stories, and beat edits — fast music-driven hype edits with giant words and no narration) — rendered as real MP4s sized for LinkedIn, Instagram, X and Reels/TikTok, with optional sound design and narration. Starts with a short guided intake (language first — Portuguese, English, Spanish or other — then product, story or beat edit (each with its own questions), look, idea, versions, sound, narration, platform, duration, visuals, CTA, narration engine, voice, captions, hook, retention, pacing, QC), extracts the brand straight from the site, generates several versions in parallel, reveals them in Finder and asks which one is best. Use whenever the user wants a motion video, animated reel, promo/teaser clip, social video, animated explainer or "showreel" for a product, a website, a story/topic, or a beat/hype edit on a song.
 model: claude-opus-5-5
 ---
 
@@ -23,7 +23,11 @@ What's inside (absolute paths come from this skill's folder — call it `$SKILL`
   `vo.py` (edge-tts), `sfx.py`/`mix.py` (synthesized SFX + bed, ducking), `render.py` (frames + `--test`/`--sweep` layout
   check), `render_final.sh` (low-impact sliced 60 fps render + `_upload.mp4`), `render_all.sh` (all formats),
   `qc_video.py` + `qc_captions.py` (final QC), `check_env.sh`.
-- `references/` — `craft.md` (the quality bar — every rule came from a rejected draft), `pipeline.md`, `brainstorm.md`.
+- `templates/beat-edit.html` — beat-edit engine: recreated chat opener, shots on bass hits, word slams, offer card,
+  CTA lockup, silent punchline; edit only its CFG block. Scripts for it: `beat_map.py` (hits, drop, silences →
+  beats.json/beats.js), `slowed_reverb.py` (slowed + reverb / sped up), `vectorize_logo.sh` (PNG logo → crisp SVG).
+- `references/` — `craft.md` (the quality bar — every rule came from a rejected draft), `pipeline.md`, `brainstorm.md`,
+  `beat-edit.md` (the full dossier for beat edits).
 
 ---
 
@@ -53,31 +57,65 @@ use it as the default language of the script, narration, captions, on-screen tex
 video in another language than the chat, confirm it in one line. The narration voice must match the video language
 (a Brazilian voice for PT-BR, an American one for EN-US, etc.); numbers/units follow that locale (1.858 vs 1,858).
 
-### Q1 — Product or story
+### Q1 — What kind of video (this choice decides every question that follows)
 ```
-header "Type"  question "Is this video about a product or is it a story?"
-options: "A product or website" — promo, showreel, teaser, explainer for something specific
+header "Type"  question "What kind of video is it?"
+options: "A product or website" — promo, showreel, teaser, explainer for something specific (I'll read its site)
          "A story or topic"     — content with no product (history, curiosity, explainer), e.g. "how a bridge is built"
+         "A beat edit"          — fast hype edit driven by a song: cuts on every beat, giant words, no narration
+                                  (phonk / funk / slowed + reverb style) — for a brand or a topic
 ```
-- **Product** → plain message: *"Paste the product's URL."* Then **extract the brand** before asking anything else
-  (2–5 min, silently): fetch the homepage and main nav pages, read the CSS (custom properties, Tailwind config,
-  `@font-face`), logo SVG, product screenshots/mocks, data-viz components, headlines/CTAs and stats verbatim. Write it to
-  `<project>/brand.md` (colors with roles, fonts, logo files, UI component catalog, data-viz catalog, copy, forbidden
-  claims). Download logos/fonts into `<project>/assets/`. Tell the user in one line what you captured.
-- **Story** → plain message: *"Want the video to borrow the look of a site or brand? Paste the URL — or say no and I'll
-  design a look for the topic."* With a URL: extract the brand as above, but treat it as a **visual reference only** (you
-  may go beyond it) — the CTA end card can carry its logo. Without a URL, ask the look:
-  ```
-  header "Look"  question "What look should the video have?"
-  options: "Dark cinematic" (Recommended for tech/science) — deep navy/black, one bright accent, real photos graded
-                             toward it, glow and bloom on 3D
-           "Light editorial" — paper white, ink type, one accent, documentary/magazine feel
-           "Bold & colourful" — saturated palette, big type, snappy — memes, lifestyle
-           "You decide"      — I design a look from the topic
-  ```
-  Write it to `<project>/look.md` (palette with roles, 2 fonts, texture, motion language).
+Each answer opens its own flow. Never ask a question that doesn't apply to the flow: a story has no product URL, a beat
+edit has no narration, voice, captions or narration engine.
 
-### Q2 — Idea
+| | Flow A — Product | Flow B — Story | Flow C — Beat edit |
+|---|---|---|---|
+| source | product URL (required) | optional look reference | brand URL *or* topic |
+| idea | format / joke / message | story + angle | the message (3–8 phrases) |
+| audio | SFX / narration / both | SFX / narration / both | **the user's song** (file) + treatment |
+| asks voice, captions, engine | if narrated | if narrated | never |
+| asks hook / retention / pacing | yes | yes | no (structure comes from the song) |
+| reference | craft.md | craft.md | **beat-edit.md** + craft.md |
+
+#### Flow A — Product
+Plain message: *"Paste the product's URL."* Then **extract the brand** before asking anything else
+(2–5 min, silently): fetch the homepage and main nav pages, read the CSS (custom properties, Tailwind config,
+`@font-face`), logo SVG, product screenshots/mocks, data-viz components, headlines/CTAs and stats verbatim. Write it to
+`<project>/brand.md` (colors with roles, fonts, logo files, UI component catalog, data-viz catalog, copy, forbidden
+claims). Download logos/fonts into `<project>/assets/`. Tell the user in one line what you captured. → Q2 … Q16.
+
+#### Flow B — Story
+Plain message: *"Want the video to borrow the look of a site or brand? Paste the URL — or say no and I'll
+design a look for the topic."* With a URL: extract the brand as above, but treat it as a **visual reference only** (you
+may go beyond it) — the CTA end card can carry its logo. Without a URL, ask the look:
+```
+header "Look"  question "What look should the video have?"
+options: "Dark cinematic" (Recommended for tech/science) — deep navy/black, one bright accent, real photos graded
+                           toward it, glow and bloom on 3D
+         "Light editorial" — paper white, ink type, one accent, documentary/magazine feel
+         "Bold & colourful" — saturated palette, big type, snappy — memes, lifestyle
+         "You decide"      — I design a look from the topic
+```
+Write it to `<project>/look.md` (palette with roles, 2 fonts, texture, motion language). → Q2 … Q16.
+
+#### Flow C — Beat edit (read `references/beat-edit.md` now)
+Ask one step at a time:
+- **C1 Subject** — `AskUserQuestion`: "A brand or product" (then: *"Paste its URL"* — extract logo, colours, real claims,
+  the offer; vectorize the logo with `scripts/vectorize_logo.sh`) · "A topic, person or event" (then: *"What's it about?"*).
+- **C2 The song** — plain message: *"Which song? Download the audio file (mp3, wav or m4a) from wherever you get audios
+  for edits and drop it here or paste its path. If it's long, tell me the part to use (e.g. 0:42–1:15)."* Then
+  `AskUserQuestion` "Treatment": "Slowed + reverb (Recommended)" · "Original speed" · "Sped up". Process with
+  `slowed_reverb.py`, map with `beat_map.py`, and tell the user in one line: length, BPM, where the drop and the silence fall.
+- **C3 The message** — plain message: *"Which words or phrases must appear? (3–8 short ones) — or say 'write it' and
+  I'll propose them."* If you write them: hook slam → what it is → what it changes → how it works (3–5 verbs) → the
+  offer → CTA; ≤ 3 words per slam; real claims only (from the site). Show the list in one message, then build.
+- **C4 Settings** — one `AskUserQuestion` call: Opener ("Recreated chat (Recommended)" — then ask which app: WhatsApp,
+  iMessage, Slack, Discord, Instagram DMs · "POV / question caption" · "Straight to the hero") · Versions ("1
+  (Recommended)" · "2") · Platform (multiSelect, as Q6) · Ending ("Silent punchline after the music cuts (Recommended)" ·
+  "Lockup + CTA only" · "Loop back to the start").
+Then go straight to Step 3 using `templates/beat-edit.html` (skip Q2–Q16). Duration = the song section.
+
+### Q2 — Idea (Flows A and B)
 Plain message — product: *"What's your idea for the video? (A format, a joke, a feature, a message — or say 'no idea'
 and I'll brainstorm 10.)"* · story: *"What story do you want to tell? (The topic and the angle — or say 'no idea' and I'll
 brainstorm 10.)"*
@@ -242,6 +280,10 @@ written plans**; the user judges rendered animation.
 ## Step 3 — Generate the versions
 
 - **1 version** → build it yourself (narration-first: script → voice → words.json → style frames → animation).
+- **Beat edit (Flow C)** → copy `templates/beat-edit.html` + `beats.js` + logo SVG + icons into `<root>/source/`, fill the
+  CFG block (palette, logo, mark, icons, token, chat messages on intro hits, punchline, CTA) and WORDS or an explicit
+  `shots` list on hits; test stills with `render.py --test`, then `render_final.sh beat-edit.html song_padded.wav …`.
+  Follow beat-edit.md §9 before showing it.
 - **Before animating**: source real photos/3D (craft.md §8) and do a design pass — style frames per beat, rendered
   with `render.py --test`, critiqued for hook, density and fit (§5c). With agents: have each one stop after its style
   frames and report; review the sheets yourself, send notes, then let it animate.

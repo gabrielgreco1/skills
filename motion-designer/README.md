@@ -26,7 +26,7 @@ frame-perfect from code (no After Effects), then checked frame by frame before y
 | `references/craft.md` | the quality bar — every rule came from a rejected draft |
 | `references/pipeline.md` | step-by-step production commands |
 | `references/brainstorm.md` | formats for products and for story/curiosity content |
-| `templates/beat-edit.html` + `references/beat-edit.md` | beat edits: music-driven hype edits (cuts on every bass hit, giant words, recreated chat opener, offer lockup) — `beat_map.py`, `slowed_reverb.py`, `vectorize_logo.sh` |
+| `templates/beat-edit.html` + `references/beat-edit.md` | beat edits: music-driven hype edits (cuts on every bass hit, drop, giant word slams, strobe, grain) — `beat_map.py`, `slowed_reverb.py`, `vectorize_logo.sh` |
 | `templates/timeline.html` | deterministic timeline: safe zones, layout bands, `Captions()`, `EndCard()` |
 | `templates/three-kit.js` + `lib/three/` | Three.js r170 (MIT, vendored) + ready 3D recipes: exploded layers, globe with routes, seabed + cable with a light pulse, bloom, HDRI lighting |
 | `scripts/fetch_assets.py` | three.js examples library, Wikimedia Commons, Poly Haven, NASA — licence logged per file |

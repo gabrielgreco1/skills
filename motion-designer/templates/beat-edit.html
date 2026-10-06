@@ -1,10 +1,11 @@
 <!doctype html>
 <!--
-  beat-edit.html — template for a music-driven "beat edit" (see references/beat-edit.md).
-  Copy it to <root>/source/ next to: beats.js (scripts/beat_map.py), the logo SVG (scripts/vectorize_logo.sh),
-  the theme's icon SVGs/PNGs, and the song (slowed_reverb.py). Then edit ONLY the CFG block below.
-  Contract with render.py: ?ar=9x16, window.DUR, window.seek(t), window.ready. Every cut comes from BEATS.hits
-  (snapped to 1/60 s), so the 240 fps → tmix=4 render never blends two shots.
+  beat-edit.html — motion kit for music-driven edits (see references/beat-edit.md).
+  It gives you the FORMAT (beat-locked shots, drop, pulse/shake/whip, word slams, strobe, grain) — not a script.
+  Every video writes its own SHOTS list: what is on screen, and when, is decided per idea.
+  Next to it in <root>/source/: beats.js (scripts/beat_map.py), the song, and the video's images/SVGs.
+  Contract with render.py: ?ar=9x16, window.DUR, window.seek(t), window.ready. Times snap to 1/60 s so tmix never
+  blends two shots.
 -->
 <html><head><meta charset="utf-8"><title>beat edit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,39 +14,14 @@
 html,body{margin:0;background:#000;overflow:hidden}
 #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:#000;color:#fff}
 canvas{position:absolute;inset:0}
-.L{position:absolute;inset:0;display:none}.ab{position:absolute}
-/* words */
 #words{position:absolute;inset:0;display:none;pointer-events:none}
 .w{position:absolute;left:-60px;right:-60px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;line-height:.88;color:#fff;text-shadow:0 10px 40px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.6)}
 #grain{position:absolute;inset:0;pointer-events:none;opacity:.10;mix-blend-mode:overlay}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
-/* ---- recreated messenger (iOS WhatsApp, dark). For another app: screenshot the real app window, sample its colours
-   and spacing, and restyle these few classes (header, wallpaper, bubbles, reactions, input bar). */
-.wa{background:#0b0b0b;font-family:system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;color:#e9edef}
-.sbar{z-index:6;position:absolute;left:0;right:0;top:40px;height:70px;display:flex;justify-content:space-between;align-items:center;padding:0 70px 0 84px;font:600 36px system-ui,-apple-system,sans-serif;color:#fff}
-.wh{z-index:6;position:absolute;left:0;right:0;top:110px;height:150px;background:#161717;display:flex;align-items:center;gap:20px;padding:0 34px;border-bottom:1px solid #222}
-.wh .back{color:#fff;font:400 64px system-ui,-apple-system,sans-serif;margin-top:-8px}.wh .cnt{font:500 32px system-ui,-apple-system,sans-serif;color:#fff;margin-left:-12px}
-.wh .gav{width:104px;height:104px;border-radius:50%;display:grid;place-items:center;font-size:54px}
-.wh .nm{font:600 44px system-ui,-apple-system,sans-serif;color:#fff}.wh .sub{font:400 32px system-ui,-apple-system,sans-serif;color:#8696a0;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:560px}
-.wall{position:absolute;left:0;right:0;top:260px;bottom:180px}
-.chip{position:absolute;left:50%;transform:translateX(-50%);background:#1f2023;color:#c9cdd1;font:500 32px system-ui,-apple-system,sans-serif;padding:10px 26px;border-radius:16px}
-.b{position:absolute;max-width:860px;border-radius:28px;padding:18px 28px 16px;font:400 50px/1.26 system-ui,-apple-system,sans-serif;box-shadow:0 2px 2px rgba(0,0,0,.25)}
-.b.in{left:56px;background:#242626;border-top-left-radius:6px}.b.out{right:56px;background:#144d37;border-top-right-radius:6px}
-.b .who{font:600 38px system-ui,-apple-system,sans-serif;margin-bottom:4px}.b .tm{float:right;font:400 30px system-ui,-apple-system,sans-serif;color:rgba(233,237,239,.6);margin:22px 0 -8px 22px}
-.b .rx{position:absolute;bottom:-46px;left:24px;background:#242626;border:3px solid #0b0b0b;border-radius:34px;padding:4px 16px;font:500 36px system-ui,-apple-system,sans-serif;color:#c9cdd1;opacity:0}
-.lp{background:#1b1c1c;border-radius:16px;overflow:hidden;margin:6px 0 12px;width:800px}.lp .th{height:330px;display:grid;place-items:center}
-.lp .tt{padding:18px 22px 4px;font:600 42px system-ui,-apple-system,sans-serif;color:#e9edef}.lp .dm{padding:6px 22px 20px;font:400 32px system-ui,-apple-system,sans-serif;color:#8696a0}
-.wbar{z-index:6;position:absolute;left:0;right:0;bottom:60px;height:120px;display:flex;align-items:center;gap:24px;padding:0 30px;background:#0b0b0b}
-.wbar .fld{flex:1;height:84px;border-radius:42px;background:#232424;color:#8696a0;font:400 36px system-ui,-apple-system,sans-serif;display:flex;align-items:center;padding-left:32px}
-.wbar .mic{width:96px;height:96px;border-radius:50%;background:#21c063}
-#cta{display:none;left:190px;width:700px;top:1250px;height:130px;border-radius:65px;font:800 50px system-ui,-apple-system,sans-serif;align-items:center;justify-content:center}
-#offer{display:none;left:0;right:0;top:1420px;text-align:center;font:600 34px system-ui,-apple-system,sans-serif;color:#e5e7eb}
 </style></head>
 <body><div id="stage">
 <canvas id="bg" width="1080" height="1920"></canvas>
-<div class="L wa" id="chat"></div>
-<div id="words"><div class="w" id="wt"></div><div class="w" id="wb"></div><div class="ab" id="cta"></div><div class="ab" id="offer"></div></div>
-<div class="L wa" id="punch"></div>
+<div id="words"><div class="w" id="wt"></div><div class="w" id="wb"></div></div>
 <canvas id="fx" width="1080" height="1920"></canvas>
 <canvas id="grain" width="540" height="960"></canvas>
 <div id="flash"></div>
@@ -53,121 +29,88 @@ canvas{position:absolute;inset:0}
 <script src="beats.js"></script>
 <script>
 // =====================================================================================================================
-// CFG — the only part to edit per video
+// CFG — per video
 // =====================================================================================================================
 const CFG={
-  pal:{dark:'#07080a',main:'#1d4ed8',accent:'#facc15',pop:'#22c55e',light:'#f5f5f4'},   // from the brand / theme
-  logo:'logo-white.svg',           // vector logo (scripts/vectorize_logo.sh); drawn crisp at any size
-  mark:null,                       // optional hero image (e.g. the symbol part of the logo, or an object). null → logo
-  icons:[],                        // theme objects (SVG/PNG paths) for orbit / burst / strobe shots
-  token:{symbol:'★',fill:'#facc15',edge:'#ca8a04'},  // the "reward" disk used in bursts and rain (coin, star, heart…)
-  chat:{group:'Group name',emoji:'💬',members:'Ana, Leo, Bia, you',until:null,   // until = time the dive starts (default: drop − 1.4 s)
-    messages:[ // keep it to 2–3 messages, each on an intro hit, readable
-      {who:'Leo',color:'#53bdeb',text:'first message (the problem)',t:.5},
-      {who:'Ana',color:'#06cf9c',text:'second message (the turn)',t:2.4},
-      {who:'Ana',color:'#06cf9c',link:{title:'Brand · one-line promise',domain:'example.com'},t:5.1,react:'😳 3',reactT:6.3}]},
-  punch:[{who:'Leo',color:'#53bdeb',text:'wait… really? 👀',t:.35},{who:'Ana',color:'#06cf9c',text:'link in bio 😎',t:1.25,react:'🔥 4',reactT:1.9}],
-  cta:{button:'Join now',url:'EXAMPLE.COM',sub:'one line with the offer'},
-  // [time | 'hit:N' (Nth bass hit) , visual, TOP word(s), BOTTOM word(s) in accent]; visuals listed in VIS below
-  shots:null,                      // null → autoShots(WORDS) below
+  pal:['#07080a','#1d4ed8','#facc15','#22c55e','#f5f5f4'],   // backgrounds rotate through these (take them from the subject)
+  accent:'#facc15',                // colour of the punch word
+  hero:null,                       // the subject's hero image (vector logo / product / object). Rasterised once, crisp.
+  images:[],                       // the video's other images (photos, icons, frames) for orbit / pop / photo / strobe
+  particle:null,                   // image used for bursts & rain (null → glowing dots)
 };
-// the message, as short slams (2–3 words each) — the whole edit should be readable as one sentence-chain
-const WORDS=[['STOP','SCROLLING.'],['THIS'],['CHANGES','EVERYTHING.'],['HERE\'S','HOW'],['FAST.'],['SIMPLE.'],['JOIN','NOW']];
+// SHOTS: [when, visual, TOP words, BOTTOM words (accent)] — when = seconds or 'hit:N' (Nth bass hit in beats.js).
+// One shot per hit after the drop. Write them for THIS idea; this list is only an example.
+const SHOTS_SRC=[
+  [0,'buildup'],
+  ['drop','flip'],['hit+1','burst'],
+  ['hit+2','orbit','FIRST','WORD'],['hit+3','spin','SECOND'],['hit+4','pop','THIRD','WORD'],['hit+5','photo','FOURTH'],
+  ['hit+6','strobe'],['hit+8','rain','FIFTH','WORD'],['hit+9','split','SIXTH'],
+  ['end-3','slam'],['end-1.2','strobe'],
+];
 // =====================================================================================================================
 
 const W=1080,H=1920,clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),lerp=(a,b,t)=>a+(b-a)*t,seg=(t,a,b)=>clamp((t-a)/(b-a));
 const E={o3:t=>1-Math.pow(1-t,3),o5:t=>1-Math.pow(1-t,5),i3:t=>t*t*t,oB:(t,s=1.7)=>1+(s+1)*Math.pow(t-1,3)+s*Math.pow(t-1,2)};
 const hash=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)};
-const $=id=>document.getElementById(id),show=(id,on)=>{$(id).style.display=on?'block':'none'};
+const $=id=>document.getElementById(id);
 const bg=$('bg').getContext('2d'),fx=$('fx').getContext('2d'),gr=$('grain').getContext('2d');
 const q=v=>Math.round(v*60)/60;
 const B=window.BEATS||{dur:30,hits:[],drop:8,quiet:[]};
-const HITS=B.hits.map(q), DROP=q(B.drop);
-const CUT=q((B.quiet.find(r=>r[0]>DROP+5)||[B.dur])[0]);        // music cut → silent punchline
-const DUR=q(Math.max(B.dur,CUT+3)); window.DUR=DUR; window.MARK={DROP,CUT};
+const HITS=B.hits.map(q),DROP=q(B.drop);
+const END=q((B.quiet.find(r=>r[0]>DROP+5)||[B.dur])[0]);      // end of the music (a cut to silence, or the track end)
+const DUR=q(B.dur);window.DUR=DUR;window.MARK={DROP,END};
 function pulse(t,tau=.13){let p=0;for(const h of HITS){if(h>t)break;p=Math.max(p,Math.exp(-(t-h)/tau))}return p}
+function resolve(w){if(typeof w==='number')return q(w);if(w==='drop')return DROP;
+  let m=w.match(/^hit:(\d+)$/);if(m)return HITS[+m[1]];m=w.match(/^hit\+(\d+)$/);if(m){const i=HITS.findIndex(h=>h>=DROP);return HITS[i+ +m[1]]??DUR}
+  m=w.match(/^end-([\d.]+)$/);if(m)return q(END-+m[1]);return q(+w)}
 
-// ---------------- assets
+// ---------------- images (rasterised once at high resolution → crisp at any size)
 const IMG={};function img(src){if(!IMG[src]){const i=new Image();i.src=src;IMG[src]=i}return IMG[src]}
-let LOGO=null;function prep(){const L=img(CFG.logo);const w=2400,h=Math.round(w*L.naturalHeight/L.naturalWidth||w/3);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(L,0,0,w,h);LOGO=c}
-function logo(ctx,cx,cy,w,a=1){if(!LOGO)return;ctx.save();ctx.globalAlpha=a;ctx.drawImage(LOGO,cx-w/2,cy-w*LOGO.height/LOGO.width/2,w,w*LOGO.height/LOGO.width);ctx.restore()}
-function mark(ctx,cx,cy,s,rot,flip=1,a=1){const m=CFG.mark?img(CFG.mark):null;ctx.save();ctx.globalAlpha=a;ctx.translate(cx,cy);ctx.rotate(rot);ctx.scale(flip,1);
-  if(m&&m.complete)ctx.drawImage(m,-s/2,-s/2*m.naturalHeight/m.naturalWidth,s,s*m.naturalHeight/m.naturalWidth);else if(LOGO)ctx.drawImage(LOGO,-s/2,-s/2*LOGO.height/LOGO.width,s,s*LOGO.height/LOGO.width);ctx.restore()}
-function token(ctx,cx,cy,r,flip=1,rot=0){if(!(r>1))return;const T=CFG.token;ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);ctx.scale(Math.max(.05,Math.abs(flip)),1);
-  ctx.fillStyle=T.edge;ctx.beginPath();ctx.arc(0,r*.08,r,0,7);ctx.fill();ctx.fillStyle=T.fill;ctx.beginPath();ctx.arc(0,0,r,0,7);ctx.fill();
-  ctx.strokeStyle=T.edge;ctx.lineWidth=r*.1;ctx.beginPath();ctx.arc(0,0,r*.72,0,7);ctx.stroke();ctx.fillStyle=T.edge;ctx.font=`${r*.9}px Anton`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(T.symbol,0,r*.06);ctx.restore()}
-function icon(k,x,y,s,rot=0){const L=CFG.icons;if(!L.length)return token(bg,x,y,s*.4,Math.cos(rot*3),rot);const i=img(L[k%L.length]);if(!i.complete)return;bg.save();bg.translate(x,y);bg.rotate(rot);bg.drawImage(i,-s/2,-s/2,s,s);bg.restore()}
-function rr(x,y,w,h,r){bg.beginPath();bg.roundRect(x,y,w,h,r);bg.fill()}
+const RAS={};function ras(src){if(!src)return null;if(RAS[src])return RAS[src];const i=img(src);if(!i.complete||!i.naturalWidth)return null;const w=1600,h=Math.round(w*i.naturalHeight/i.naturalWidth);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(i,0,0,w,h);return RAS[src]=c}
+function draw(ctx,src,cx,cy,w,rot=0,flip=1,a=1){const r=ras(src);if(!r)return;ctx.save();ctx.globalAlpha=a;ctx.translate(cx,cy);ctx.rotate(rot);ctx.scale(flip,1);ctx.drawImage(r,-w/2,-w*r.height/r.width/2,w,w*r.height/r.width);ctx.restore()}
+function pick(k){const L=CFG.images.length?CFG.images:(CFG.hero?[CFG.hero]:[]);return L[k%Math.max(1,L.length)]}
+function particle(ctx,x,y,s,rot){if(CFG.particle)return draw(ctx,CFG.particle,x,y,s,rot);if(!(s>1))return;const g=ctx.createRadialGradient(x,y,0,x,y,s);g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(.4,CFG.accent);g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,s,0,7);ctx.fill()}
 
-// ---------------- backgrounds + visuals (each: (u = seconds since the shot started, t))
-function back(c,t){bg.fillStyle=c;bg.fillRect(0,0,W,H);const g=bg.createRadialGradient(540,900,0,540,900,1100);g.addColorStop(0,'rgba(255,255,255,.22)');g.addColorStop(1,'rgba(0,0,0,0)');bg.fillStyle=g;bg.fillRect(0,0,W,H);
+// ---------------- backgrounds + the visual vocabulary (each: u = s since the shot began, t = absolute, k = shot index)
+function back(k,t){const c=CFG.pal[k%CFG.pal.length];bg.fillStyle=c;bg.fillRect(0,0,W,H);const g=bg.createRadialGradient(540,900,0,540,900,1100);g.addColorStop(0,'rgba(255,255,255,.22)');g.addColorStop(1,'rgba(0,0,0,0)');bg.fillStyle=g;bg.fillRect(0,0,W,H);
   bg.save();bg.globalCompositeOperation='overlay';for(let i=0;i<16;i++){const a=i/16*6.283+t*.9,w=.045;bg.fillStyle=i%2?'rgba(255,255,255,.08)':'rgba(0,0,0,.08)';bg.beginPath();bg.moveTo(540,900);bg.lineTo(540+Math.cos(a-w)*1500,900+Math.sin(a-w)*1500);bg.lineTo(540+Math.cos(a+w)*1500,900+Math.sin(a+w)*1500);bg.fill()}bg.restore()}
-const P=CFG.pal;
 const VIS={
- flip:(u,t)=>{back(P.dark,t);mark(bg,540,900,lerp(820,600,seg(u,0,.2)),u*10,Math.cos(u*22))},              // hero spins/flips (the drop)
- burst:(u,t)=>{back(P.dark,t);token(bg,540,880,300*E.oB(seg(u,0,.18)),Math.cos(u*8));for(let k=0;k<30;k++){const a=hash(k)*6.283,sp=1100+hash(k+5)*1500,v=u+.05;token(bg,540+Math.cos(a)*sp*v,860+Math.sin(a)*sp*v+1800*v*v,30+hash(k+2)*36,Math.cos(v*12+k),hash(k)*3)}},
- orbit:(u,t)=>{back(P.main,t);for(let k=0;k<12;k++){const a=hash(k)*6.283+t*(1.4+hash(k+3)),r=420+hash(k+5)*380;icon(k,540+Math.cos(a)*r,900+Math.sin(a)*r*.8,150+hash(k+8)*120,t*2+k)}},
- rain:(u,t)=>{back(P.dark,t);for(let k=0;k<34;k++){const x=hash(k+1)*W,y=-250+((u*(1300+hash(k+2)*900)+hash(k+4)*2300)%2400);token(bg,x,y,40+hash(k+6)*44,Math.cos(u*9+k),hash(k)*2)}},
- spin:(u,t)=>{back(P.dark,t);mark(bg,540,900,lerp(1200,760,E.o3(seg(u,0,.3))),t*3.2)},
- slam:(u,t)=>{back(P.main,t);const p=E.oB(seg(u,0,.18),2.4);logo(bg,540,900,(1.6-.6*p)*900)},
- pop:(u,t)=>{back(P.pop,t);const k=Math.floor(t*7);icon(k,540,980,620*E.oB(seg(u,0,.2),2),Math.sin(u*30)*.05)},
- card:(u,t)=>{back(P.main,t);bg.save();bg.translate(540,1230);bg.rotate(lerp(-.25,-.06,E.oB(seg(u,0,.25))));const s=E.oB(seg(u,0,.2),2);bg.scale(s,s);   // offer card (edit the lines)
-   bg.fillStyle=P.light;rr(-380,-230,760,460,36);bg.fillStyle=P.dark;rr(-380,-230,760,120,36);bg.fillRect(-380,-150,760,40);bg.fillStyle='#fff';bg.font='56px Anton';bg.textAlign='left';bg.textBaseline='middle';bg.fillText('WHAT YOU GET',-330,-170);
-   bg.fillStyle='#111';bg.font='600 34px system-ui,-apple-system,sans-serif';['✓ benefit one','✓ benefit two','✓ benefit three'].forEach((l,k)=>bg.fillText(l,-330,-40+k*70));bg.restore()},
- strobe:(u,t)=>{const i=Math.floor(Math.round(u*60+1e-6)/4);const c=[P.main,P.accent,P.dark,P.pop,P.light][i%5];bg.fillStyle=c;bg.fillRect(0,0,W,H);const m=i%4;
-   if(m<2)icon(i,540,900,640,Math.sin(i)*.4);else if(m===2)token(bg,540,900,320,1);else logo(bg,540,900,900)},
- lockup:(u,t)=>{back(P.dark,t);const p=E.oB(seg(u,0,.2),2.2);logo(bg,540,760,(1.4-.4*p)*860);for(let k=0;k<20;k++){const x=hash(k+1)*W,y=-250+((u*(700+hash(k+2)*500)+hash(k+4)*2300)%2400);token(bg,x,y,30+hash(k+6)*30,Math.cos(u*6+k),hash(k)*2)}},
+ buildup:(u,t,k)=>{bg.fillStyle='#000';bg.fillRect(0,0,W,H);const p=seg(t,0,DROP);const g=bg.createRadialGradient(540,900,0,540,900,300+700*p);g.addColorStop(0,`rgba(255,255,255,${.08+.25*p})`);g.addColorStop(1,'rgba(0,0,0,0)');bg.fillStyle=g;bg.fillRect(0,0,W,H);
+   if(CFG.hero)draw(bg,CFG.hero,540,900,lerp(260,520,E.i3(p))*(1+pulse(t,.2)*.15),p*p*8,1,.25+.75*p)},       // tension until the drop
+ flip:(u,t,k)=>{back(0,t);draw(bg,CFG.hero||pick(0),540,900,lerp(820,600,seg(u,0,.2)),u*10,Math.cos(u*22))},        // hero spins/flips on the drop
+ burst:(u,t,k)=>{back(0,t);draw(bg,CFG.hero||pick(0),540,880,520*E.oB(seg(u,0,.18)));for(let i=0;i<30;i++){const a=hash(i)*6.283,sp=1100+hash(i+5)*1500,v=u+.05;particle(bg,540+Math.cos(a)*sp*v,860+Math.sin(a)*sp*v+1800*v*v,30+hash(i+2)*36,hash(i)*3+v*8)}},
+ orbit:(u,t,k)=>{back(k,t);for(let i=0;i<12;i++){const a=hash(i)*6.283+t*(1.4+hash(i+3)),r=420+hash(i+5)*380;draw(bg,pick(i),540+Math.cos(a)*r,900+Math.sin(a)*r*.8,150+hash(i+8)*120,t*2+i)}},
+ rain:(u,t,k)=>{back(k,t);for(let i=0;i<34;i++){const x=hash(i+1)*W,y=-250+((u*(1300+hash(i+2)*900)+hash(i+4)*2300)%2400);particle(bg,x,y,40+hash(i+6)*44,hash(i)*2+u*6)}},
+ spin:(u,t,k)=>{back(k,t);draw(bg,CFG.hero||pick(k),540,900,lerp(1200,760,E.o3(seg(u,0,.3))),t*3.2)},
+ slam:(u,t,k)=>{back(k,t);const p=E.oB(seg(u,0,.18),2.4);draw(bg,CFG.hero||pick(k),540,900,(1.6-.6*p)*860)},
+ pop:(u,t,k)=>{back(k,t);draw(bg,pick(k),540,980,640*E.oB(seg(u,0,.2),2),Math.sin(u*30)*.05)},
+ photo:(u,t,k)=>{const r=ras(pick(k));bg.fillStyle='#000';bg.fillRect(0,0,W,H);if(!r)return;const s=Math.max(W/r.width,H/r.height)*(1.15+u*.25);bg.drawImage(r,540-r.width*s/2,960-r.height*s/2,r.width*s,r.height*s)},   // full-bleed, punch zoom
+ split:(u,t,k)=>{back(k,t);[0,1].forEach(j=>{const o=E.o5(seg(u,j*.08,.2+j*.08));draw(bg,pick(k+j),j?760:320,lerp(j?2200:-300,900,o),460,(j?1:-1)*.12)})},
+ strobe:(u,t,k)=>{const i=Math.floor(Math.round(u*60+1e-6)/4);bg.fillStyle=CFG.pal[i%CFG.pal.length];bg.fillRect(0,0,W,H);draw(bg,i%3===2&&CFG.hero?CFG.hero:pick(i),540,900,i%3===2?860:640,Math.sin(i)*.4)},   // content changes every 4 frames
 };
-// WORDS → one slam per hit after the drop, cycling visuals; first hit = flip, then burst; ends with strobe + lockup
-function autoShots(){const S=[[DROP,'flip','',''],[HITS.find(h=>h>DROP+.1)||DROP+.2,'burst','','']];const after=HITS.filter(h=>h>DROP+.3&&h<CUT-3.2);
-  const vis=['orbit','spin','pop','rain','orbit','card','spin','pop'];let wi=0,vi=0;
-  for(let i=0;i<after.length;i++){const w=WORDS[wi%WORDS.length];S.push([after[i],vis[vi++%vis.length],w[0]||'',w[1]||'']);if(i%2===1)wi++;if(i===Math.floor(after.length/2))S.push([after[i]+.25,'strobe','',''])}
-  S.push([q(CUT-3.1),'lockup','','','cta']);S.push([q(CUT-1.2),'strobe','','']);return S.sort((a,b)=>a[0]-b[0])}
 let SHOTS=null;
-function setWords(top,bot,u,hi){const Y=hi?560:1000,two=top&&bot;const fsT=top.length>9?150:(top.length>6?200:(top.length>3?260:330)),fsB=bot.length>10?160:(bot.length>7?210:300);
-  const wt=$('wt'),wb=$('wb');wt.textContent=top;wb.textContent=bot;wt.style.fontSize=fsT+'px';wb.style.fontSize=fsB+'px';wb.style.color=P.accent;
+function setWords(top,bot,u){const two=top&&bot,Y=1000;const fsT=top.length>9?150:(top.length>6?200:(top.length>3?260:330)),fsB=bot.length>10?160:(bot.length>7?210:300);
+  const wt=$('wt'),wb=$('wb');wt.textContent=top;wb.textContent=bot;wt.style.fontSize=fsT+'px';wb.style.fontSize=fsB+'px';wb.style.color=CFG.accent;
   wt.style.top=(two?Y-fsT*.9:Y-fsT*.44)+'px';wb.style.top=(two?Y+10:Y-fsB*.44)+'px';const p=E.oB(seg(u,0,.12),2.6);(bot?wb:wt).style.transform=`scale(${1.45-.45*p})`;(bot?wt:wb).style.transform='scale(1)'}
-
-// ---------------- chat (opener + punchline)
-function bubbleHTML(m,id){if(m.link)return `<div class="b in" id="${id}"><div class="who" style="color:${m.color}">${m.who}</div><div class="lp"><div class="th" style="background:${P.main}"><img src="${CFG.logo}" style="width:420px"></div><div class="tt">${m.link.title}</div><div class="dm">${m.link.domain}</div></div><span style="color:#53bdeb">${m.link.domain}</span><span class="tm">19:04</span>${m.react?`<div class="rx">${m.react}</div>`:''}</div>`;
-  return `<div class="b in" id="${id}"><div class="who" style="color:${m.color}">${m.who}</div>${m.text}<span class="tm">19:0${3+(id.length%3)}</span>${m.react?`<div class="rx">${m.react}</div>`:''}</div>`}
-function chatHTML(msgs,pre){return `<div class="ab" style="left:0;right:0;top:0;height:260px;background:#161717;z-index:5"></div><div class="ab" style="left:0;right:0;bottom:0;height:180px;background:#0b0b0b;z-index:5"></div>
-  <div class="sbar"><span>9:41</span><span>▂▄▆█ ◔ ▭</span></div><div class="wh"><span class="back">‹</span><span class="cnt">24</span><div class="gav" style="background:${P.main}">${CFG.chat.emoji}</div><div><div class="nm">${CFG.chat.group}</div><div class="sub" id="${pre}sub">${CFG.chat.members}</div></div></div>
-  <canvas class="wall" id="${pre}wall" width="1080" height="1480"></canvas><div class="ab" id="${pre}feed" style="left:0;right:0;top:0;bottom:0"><div class="chip" id="${pre}hoje">Today</div>${msgs.map((m,k)=>bubbleHTML(m,pre+k)).join('')}</div>
-  <div class="wbar"><div class="fld">Message</div><div class="mic"></div></div>`}
-function wallpaper(c){const x=c.getContext('2d');x.fillStyle='#0b0b0b';x.fillRect(0,0,c.width,c.height);x.strokeStyle='rgba(255,255,255,.055)';x.lineWidth=3;
-  for(let i=0;i<190;i++){x.save();x.translate(hash(i)*c.width,hash(i+50)*c.height);x.rotate(hash(i+7)*6.28);x.beginPath();const s=26+hash(i+9)*22;if(i%3)x.arc(0,0,s/2,0,7);else x.rect(-s/2,-s/3,s,s*.66);x.stroke();x.restore()}}
-function layoutFeed(msgs,pre){const hs=msgs.map((m,k)=>$(pre+k).offsetHeight+(m.react?52:0));let y=1690-hs.reduce((a,b)=>a+b,0)-26*(msgs.length-1);$(pre+'hoje').style.top=(y-90)+'px';const F=[];msgs.forEach((m,k)=>{$(pre+k).style.top=y+'px';y+=hs[k];F.push(y);y+=26});return F}
-function runChat(t,msgs,pre,F,t0=0){msgs.forEach((m,k)=>{const el=$(pre+k),tin=t0+m.t;const p=E.oB(seg(t,tin,tin+.25),1.4);el.style.visibility=t<tin?'hidden':'visible';el.style.opacity=clamp((t-tin)/.08);el.style.transform=`translateY(${(1-p)*40}px) scale(${.94+.06*p})`;el.style.transformOrigin='0 100%';
-    const rx=el.querySelector('.rx');if(rx){const rt=t0+(m.reactT||m.t+1);rx.style.opacity=seg(t,rt,rt+.1);rx.style.transform=`scale(${E.oB(seg(t,rt,rt+.2))})`}});
-  let off=F[0]-1690-400;msgs.forEach((m,k)=>{if(t>=t0+m.t)off=F[k]-1690});$(pre+'feed').style.transform=`translateY(${-off}px)`;   // snap, never animate the scroll (motion blur ghosts it)
-  const nxt=msgs.find(m=>t<t0+m.t);$(pre+'sub').textContent=nxt&&t>t0+nxt.t-1?`${nxt.who} is typing…`:CFG.chat.members}
 
 // ---------------- seek
 function seek(t){
-  show('chat',false);show('punch',false);show('words',false);$('cta').style.display='none';$('offer').style.display='none';
-  bg.setTransform(1,0,0,1,0,0);bg.globalAlpha=1;bg.globalCompositeOperation='source-over';bg.fillStyle=P.dark;bg.fillRect(0,0,W,H);fx.clearRect(0,0,W,H);
-  let flash=0;const Pp=pulse(t),st=$('stage');st.style.transform='none';st.style.filter='none';
-  const dive0=CFG.chat.until??DROP-1.4;
-  if(t<DROP){show('chat',true);runChat(t,CFG.chat.messages,'c',window.F1);
-    const d=E.i3(seg(t,dive0,dive0+.7)),c=$('chat');c.style.transformOrigin='45% 70%';c.style.transform=`scale(${1+t*.012+pulse(t,.18)*.035+d*4}) rotate(${Math.sin(t*.8)*.4}deg)`;c.style.opacity=1-seg(t,dive0+.45,dive0+.7);
-    if(t>dive0+.45){const u=seg(t,dive0+.45,DROP);fx.fillStyle=`rgba(0,0,0,${seg(t,dive0+.45,dive0+.7)})`;fx.fillRect(0,0,W,H);mark(fx,540,900,lerp(240,420,u),u*u*12,1,seg(t,dive0+.45,dive0+.7))}}
-  else if(t<CUT){const k=SHOTS.reduce((a,s,i)=>s[0]<=t?i:a,0);const [t0,v,a,b,x]=SHOTS[k];const u=t-t0;
-    VIS[v](u,t);const wp=E.o5(seg(u,0,.09)),dir=k%2?1:-1;if(wp<1){bg.putImageData(bg.getImageData(0,0,W,H),(1-wp)*dir*260,0)}      // whip-in
-    const sh=Pp*16;st.style.transform=`translate(${(hash(Math.floor(t*40))-.5)*sh}px,${(hash(Math.floor(t*40)+7)-.5)*sh}px) scale(${1+Pp*.06}) rotate(${(hash(Math.floor(t*40)+3)-.5)*Pp*1.2}deg)`;
-    st.style.filter=wp<1?`blur(${(1-wp)*10}px)`:'none';flash=Math.pow(Pp,8)*.6+(u<.05&&['burst','slam','flip'].includes(v)?.8:0);
-    if(a||b){show('words',true);setWords(a,b,u,v==='card')}
-    if(x==='cta'){show('words',true);setWords('','',0,false);const cta=$('cta');cta.style.display='flex';cta.style.background=P.pop;cta.style.color=P.dark;cta.textContent=CFG.cta.button;$('offer').style.display='block';$('offer').textContent=CFG.cta.sub;
-      cta.style.transform=`scale(${E.oB(seg(u,.35,.55),2)*(1+pulse(t,.2)*.06)})`;$('offer').style.opacity=seg(u,.6,.8);const wb=$('wb');wb.textContent=CFG.cta.url;wb.style.fontSize='120px';wb.style.top='1080px';wb.style.transform='scale(1)';wb.style.color=P.pop}
-    if(t>CUT-.5){fx.fillStyle=`rgba(0,0,0,${seg(t,CUT-.5,CUT)})`;fx.fillRect(0,0,W,H)}}
-  else{show('punch',true);runChat(t,CFG.punch,'p',window.F2,CUT);fx.fillStyle=`rgba(0,0,0,${1-seg(t,CUT,CUT+.25)})`;fx.fillRect(0,0,W,H)}
-  const id=gr.createImageData(540,960),s0=Math.floor(t*60);for(let i=0;i<id.data.length;i+=4){const v=hash(i*.37+s0*13.1)*255;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=255}gr.putImageData(id,0,0);
+  bg.setTransform(1,0,0,1,0,0);bg.globalAlpha=1;bg.globalCompositeOperation='source-over';fx.clearRect(0,0,W,H);$('words').style.display='none';
+  const st=$('stage'),P=pulse(t);st.style.transform='none';st.style.filter='none';let flash=0;
+  const k=SHOTS.reduce((a,s,i)=>s[0]<=t?i:a,0),[t0,v,a,b]=SHOTS[k],u=t-t0;
+  VIS[v](u,t,k);
+  if(t>=DROP&&t<END){
+    const wp=E.o5(seg(u,0,.09)),dir=k%2?1:-1;if(wp<1&&v!=='strobe')bg.putImageData(bg.getImageData(0,0,W,H),(1-wp)*dir*260,0);      // whip-in
+    const sh=P*16;st.style.transform=`translate(${(hash(Math.floor(t*40))-.5)*sh}px,${(hash(Math.floor(t*40)+7)-.5)*sh}px) scale(${1+P*.06}) rotate(${(hash(Math.floor(t*40)+3)-.5)*P*1.2}deg)`;   // pulse + shake
+    st.style.filter=wp<1&&v!=='strobe'?`blur(${(1-wp)*10}px)`:'none';flash=Math.pow(P,8)*.6+(u<.05&&['burst','slam','flip'].includes(v)?.8:0);
+  } else if(t<DROP){flash=t>DROP-.06?1:0;st.style.transform=`scale(${1+pulse(t,.2)*.03})`}
+  if(a||b){$('words').style.display='block';setWords(a||'',b||'',u)}
+  if(t>END-.4&&!SHOTS.some(s=>s[0]>=END-.01)){fx.fillStyle=`rgba(0,0,0,${seg(t,END-.4,END)})`;fx.fillRect(0,0,W,H)}   // music over, nothing scheduled → black
+  const id=gr.createImageData(540,960),s0=Math.floor(t*60);for(let i=0;i<id.data.length;i+=4){const g=hash(i*.37+s0*13.1)*255;id.data[i]=id.data[i+1]=id.data[i+2]=g;id.data[i+3]=255}gr.putImageData(id,0,0);
   $('flash').style.opacity=clamp(flash)}
 window.seek=seek;
-$('chat').innerHTML=chatHTML(CFG.chat.messages,'c');$('punch').innerHTML=chatHTML(CFG.punch,'p');wallpaper($('cwall'));wallpaper($('pwall'));
-const waitImg=i=>new Promise(r=>i.complete?r():(i.onload=i.onerror=r));
-Promise.all([document.fonts.ready,new Promise(r=>setTimeout(r,50)),waitImg(img(CFG.logo)),...CFG.icons.map(s=>waitImg(img(s))),...(CFG.mark?[waitImg(img(CFG.mark))]:[])]).then(()=>{
-  prep();SHOTS=(CFG.shots||autoShots()).map(s=>[typeof s[0]==='string'?HITS[+s[0].split(':')[1]]:q(s[0]),s[1],s[2]||'',s[3]||'',s[4]||'']);
-  show('chat',true);window.F1=layoutFeed(CFG.chat.messages,'c');show('chat',false);show('punch',true);window.F2=layoutFeed(CFG.punch,'p');show('punch',false);
+const wait=i=>new Promise(r=>i.complete?r():(i.onload=i.onerror=r));
+Promise.all([document.fonts.ready,...[CFG.hero,CFG.particle,...CFG.images].filter(Boolean).map(s=>wait(img(s)))]).then(()=>{
+  SHOTS=SHOTS_SRC.map(s=>[resolve(s[0]),s[1],s[2]||'',s[3]||'']).filter(s=>s[0]<DUR).sort((a,b)=>a[0]-b[0]);
   seek(+new URLSearchParams(location.search).get('t')||0);window.ready=true});
 </script></body></html>

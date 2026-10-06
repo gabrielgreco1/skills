@@ -1,0 +1,226 @@
+<!doctype html>
+<!--
+  timeline.html — deterministic motion timeline template.
+  Contract with scripts/render.py:
+    * reads ?ar=16x9|1x1|4x5|9x16 and lays out NATIVELY for that frame (never letterbox / pad / blur-fill)
+    * window.DUR (seconds), window.MARK (named event times for audio + VO), window.seek(t) (pure function of t)
+    * window.ready = true once fonts + images are loaded
+  Debug in a browser: open timeline.html?ar=9x16&guides=1&t=4.2   (guides = platform safe box; tinted area gets covered by app UI)
+    (or &play=1 for real-time playback)
+  Replace the BRAND block and the scenes; keep the core.
+-->
+<html><head><meta charset="utf-8"><title>timeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ---------------- BRAND (replace with the product's exact tokens) */
+:root{--bg:#F7F7F5;--ink:#141414;--cap:#141414;--cap-shadow:none;--muted:#6B6B6B;--rule:#DADAD6;--accent:#2D5BFF;
+      --display:'Inter',sans-serif;--mono:'JetBrains Mono',monospace}
+/* ---------------- core */
+html,body{margin:0;padding:0;background:var(--bg);overflow:hidden}
+#stage{position:relative;overflow:hidden;background:var(--bg);font-family:var(--display);color:var(--ink)}
+.scene{position:absolute;inset:0;display:none}
+.cam{position:absolute;inset:0;transform-origin:0 0}
+.el{position:absolute;left:0;top:0}
+.hl{position:absolute;font-weight:700;letter-spacing:-.035em;line-height:1.02}
+.hl .ln{display:block;overflow:hidden;padding-bottom:.08em}
+.hl .w{display:inline-block;overflow:hidden;vertical-align:top}
+.hl .wi{display:inline-block}
+.mono{font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase}
+#guides{position:absolute;inset:0;pointer-events:none;display:none;z-index:99}
+#guides div{position:absolute;border:2px dashed rgba(255,0,80,.7);box-shadow:0 0 0 4000px rgba(255,0,80,.08)}
+</style></head>
+<body><div id="stage"><div id="guides"><div id="safe"></div></div></div>
+<script>
+// ================================================================= core (do not edit per project)
+const Q = new URLSearchParams(location.search);
+const SIZES = {'16x9':[1920,1080],'1x1':[1080,1080],'4x5':[1080,1350],'9x16':[1080,1920]};
+const qa = Q.get('ar')||'16x9', cm = /^(\d+)x(\d+)$/.exec(qa);
+const AR = SIZES[qa] ? qa : (cm && +cm[1] > 99 ? qa : '16x9');   // custom WxH, e.g. 1200x628
+const [W,H] = SIZES[AR] || [+cm[1], +cm[2]];
+const stage = document.getElementById('stage'); stage.style.width=W+'px'; stage.style.height=H+'px';
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)), lerp=(a,b,t)=>a+(b-a)*t, seg=(t,a,b)=>clamp((t-a)/(b-a));
+const E={o2:t=>1-(1-t)*(1-t),o3:t=>1-Math.pow(1-t,3),o5:t=>1-Math.pow(1-t,5),i2:t=>t*t,i3:t=>t*t*t,
+  io3:t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2, io5:t=>t<.5?16*t**5:1-Math.pow(-2*t+2,5)/2,
+  oX:t=>t>=1?1:1-Math.pow(2,-10*t), ioX:t=>t<=0?0:t>=1?1:t<.5?Math.pow(2,20*t-10)/2:(2-Math.pow(2,-20*t+10))/2,
+  oB:(t,s=1.9)=>1+(s+1)*Math.pow(t-1,3)+s*Math.pow(t-1,2)};
+const spr=(t,f=2.4,z=.42)=>{if(t<=0)return 0;const w=2*Math.PI*f,wd=w*Math.sqrt(1-z*z);return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+z*w/wd*Math.sin(wd*t));};
+const hash=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x);};   // deterministic "random"
+// readability: minimum on-screen hold for a text = words/3 + 1 s
+const hold=txt=>txt.trim().split(/\s+/).length/3+1;
+function div(p,cls,css,html){const d=document.createElement('div');if(cls)d.className=cls;if(css)d.style.cssText=css;if(html!=null)d.innerHTML=html;p.appendChild(d);return d;}
+function T(e,{x=0,y=0,s=1,r=0,o=1,ax=.5,ay=.5}={}){e.style.transformOrigin=`${ax*100}% ${ay*100}%`;
+  e.style.transform=`translate(${x}px,${y}px) translate(${-ax*100}%,${-ay*100}%) rotate(${r}deg) scale(${s})`;
+  e.style.opacity=o; e.style.visibility=o<=.001?'hidden':'visible';}
+function cam(e,cx,cy,s){e.style.transform=`translate(${W/2}px,${H/2}px) scale(${s}) translate(${-cx}px,${-cy}px)`;}
+function scene(bg){const s=div(stage,'scene',bg?`background:${bg}`:'');const c=div(s,'cam');return{s,c};}
+function show(sc,on){sc.s.style.display=on?'block':'none';}
+function HL(p,lines,css){const h=div(p,'hl',css);
+  h.innerHTML=lines.map(l=>'<span class="ln">'+l.split(' ').map(w=>`<span class="w"><span class="wi">${w}</span></span>`).join(' ')+'</span>').join('');
+  h._w=[...h.querySelectorAll('.wi')];return h;}
+function hlA(h,t,tin,tout=1e9,st=.055){h._w.forEach((w,k)=>{const p=E.o5(seg(t,tin+k*st,tin+k*st+.6)),q=E.i3(seg(t,tout+k*.03,tout+k*.03+.32));
+  w.style.transform=`translateY(${(1-p)*115-q*115}%)`;});h.style.visibility=(t<tin-.01||t>tout+h._w.length*.03+.35)?'hidden':'visible';}
+function fade(e,t,tin,tout=1e9,dy=24){const p=E.o5(seg(t,tin,tin+.6)),q=E.i3(seg(t,tout,tout+.3));e.style.opacity=p*(1-q);e.style.transform=`translateY(${(1-p)*dy-q*dy*.6}px)`;}
+
+// ================================================================= SAFE ZONES — platform UI covers the edges
+// Feeds/reels overlay captions, buttons, progress bars and profile rows on top of the video. Everything that must be
+// READ (text, numbers, logos, CTA, key UI) stays inside the safe box; only backgrounds/textures may bleed to the edge.
+// 9x16 numbers are the union of TikTok + Instagram Reels + YouTube Shorts overlays (top bar, right action rail,
+// bottom caption/CTA block), made symmetric left/right so content stays visually centred.
+const SAFE={
+  '16x9':{t:80, r:110,b:90, l:110},
+  '1x1': {t:90, r:90, b:90, l:90},
+  '4x5': {t:110,r:90, b:120,l:90},
+  '9x16':{t:260,r:150,b:460,l:150},
+};
+const SA=SAFE[AR]||SAFE[Object.keys(SIZES).sort((a,b)=>Math.abs(SIZES[a][0]/SIZES[a][1]-W/H)-Math.abs(SIZES[b][0]/SIZES[b][1]-W/H))[0]];
+const SB={x:SA.l,y:SA.t,w:W-SA.l-SA.r,h:H-SA.t-SA.b}; SB.cx=SB.x+SB.w/2; SB.cy=SB.y+SB.h/2;
+window.SAFE_BOX=SB;   // render.py --test / --sweep checks every visible text element against this box
+
+// ================================================================= ZONES — every element has its own slot (no stacking)
+// Inside the safe box each screen is split into bands that NEVER overlap: kicker+headline on top, the hero visual in
+// the middle, captions in their own band at the bottom. A visual may be big, but it lives in VIS; captions never sit on
+// it, headlines never sit on it. Need more room? Split the beat into two screens — don't stack layers.
+const ZONES=(()=>{const g=24,tall=H/W>1.2, cap=tall?190:150, head=tall?Math.round(SB.h*.25):Math.round(SB.h*.28);
+  const HEAD={x:SB.x,y:SB.y,w:SB.w,h:head}, CAP={x:SB.x,y:SB.y+SB.h-cap,w:SB.w,h:cap};
+  return {HEAD, VIS:{x:SB.x,y:HEAD.y+head+g,w:SB.w,h:CAP.y-g-(HEAD.y+head+g)}, CAP};})();
+window.ZONES=ZONES;
+const fit=(z,ar)=>{const w=Math.min(z.w,z.h*ar),h=w/ar;return{x:z.x+(z.w-w)/2,y:z.y+(z.h-h)/2,w,h};};  // contain, never crop
+
+// ================================================================= LAYOUT — one entry per format, composed for that frame
+// Rules: compose each format from scratch; derive every position from SB (never from W/H edges);
+// tall formats (4x5, 9x16) = CENTRED, stacked, FEWER elements per screen (one headline + one visual), bigger type;
+// text >= 34 px on 1080-wide formats.
+const LAYOUT={
+  '16x9':{align:'left',   title:{fs:120,x:SB.x,y:SB.y+300,w:SB.w*.75}, sub:{fs:34}, card:{x:SB.cx,y:SB.cy,w:1100,h:520}},
+  '1x1': {align:'center', title:{fs:100,x:SB.x,y:SB.y+200,w:SB.w},     sub:{fs:36}, card:{x:SB.cx,y:SB.cy+40,w:SB.w,h:520}},
+  '4x5': {align:'center', title:{fs:104,x:SB.x,y:SB.y+240,w:SB.w},     sub:{fs:38}, card:{x:SB.cx,y:SB.cy+40,w:SB.w,h:620}},
+  '9x16':{align:'center', title:{fs:104,x:SB.x,y:SB.y+300,w:SB.w},     sub:{fs:40}, card:{x:SB.cx,y:SB.cy,w:SB.w,h:760}},
+};
+// custom sizes: add a LAYOUT['1200x628'] entry; until then fall back to the closest aspect
+const LY=LAYOUT[AR] || LAYOUT[Object.keys(SIZES).sort((a,b)=>Math.abs(SIZES[a][0]/SIZES[a][1]-W/H)-Math.abs(SIZES[b][0]/SIZES[b][1]-W/H))[0]];
+{const g=document.getElementById('safe');Object.assign(g.style,{left:SB.x+'px',top:SB.y+'px',width:SB.w+'px',height:SB.h+'px'});
+ for(const [k,z] of Object.entries(ZONES)){const d=div(document.getElementById('guides'),'',`left:${z.x}px;top:${z.y}px;width:${z.w}px;height:${z.h}px;border:2px dotted rgba(0,160,255,.8);box-shadow:none`);d.innerHTML=`<span style="font:12px monospace;color:#08f;padding:2px">${k}</span>`;}
+ if(Q.get('guides'))document.getElementById('guides').style.display='block';}
+
+// ================================================================= CAPTIONS — follow the speech, word by word
+// WORDS = [{w:'Essa', s:0.12, e:0.31}, ...] from the TTS word timings (el_tts.py words.json / edge-tts WordBoundary).
+// Rules learned the hard way (craft.md §7):
+//  · a word is INVISIBLE until spoken, then pops in place; newest word in accent; one line, 2–4 words per chunk
+//  · a chunk's layout is STATIC: all its words are laid out from the start (unspoken ones at opacity 0) — never add/remove
+//    words or re-centre while it's on screen (rebuilding made words jump sideways and ghost)
+//  · chunks never cross a sentence end (. ? !), never split a spoken number ("noventa e oito"), and the last word stays
+//    ≥ ~0.4 s before the next chunk replaces it; a chunk leaves when the next SPOKEN word starts (never lingers into the
+//    next shot)
+//  · words a headline prints at the same time go in `hide` (a Set of word indexes), decided ONCE, not per frame
+// Verify with scripts/qc_captions.py (position stability at 60 fps, hold time, visibility on the spoken word).
+const NUMW=/^(zero|um|uma|dois|duas|tr[eê]s|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|treze|quatorze|catorze|quinze|dezesseis|dezessete|dezoito|dezenove|vinte|trinta|quarenta|cinquenta|sessenta|setenta|oitenta|noventa|cem|cento|duzentos|trezentos|quatrocentos|quinhentos|seiscentos|setecentos|oitocentos|novecentos|mil|milh[aã]o|milh[oõ]es|bilh[aã]o|bilh[oõ]es|e|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|and|\d[\d.,]*%?)$/i;
+function Captions(parent,WORDS,{max=4,maxChars=24,fs=tall0()?60:48,hold=.4,hide=new Set()}={}){
+  window.WORDS=WORDS;   // exposed for qc_captions.py
+  // soft rounded plate hugging the visible words (never a full-width bar) — keeps captions readable over any picture
+  const plate=div(parent,'el','border-radius:22px;background:rgba(5,8,23,.62);backdrop-filter:blur(6px);box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0');plate.dataset.nocheck=1;
+  const box=div(parent,'el','',null);box.dataset.role='caption';
+  Object.assign(box.style,{left:ZONES.CAP.x+'px',top:ZONES.CAP.y+'px',width:ZONES.CAP.w+'px',height:ZONES.CAP.h+'px',display:'flex',
+    alignItems:'center',justifyContent:'center',flexWrap:'nowrap',gap:'0 .28em',textAlign:'center',fontWeight:800,fontSize:fs+'px',
+    lineHeight:1.1,color:'#fff',textShadow:'0 2px 10px rgba(0,0,0,.35)',whiteSpace:'nowrap'});   // white on the plate; newest word in accent
+  const idx=WORDS.map((w,i)=>i).filter(i=>!hide.has(i)), clean=w=>w.replace(/[^\p{L}\p{N}%]/gu,'');
+  const inNumber=(a,b)=>NUMW.test(clean(WORDS[a].w))&&NUMW.test(clean(WORDS[b].w))&&!/[.?!,:]$/.test(WORDS[a].w)&&b===a+1;
+  // chunking = per sentence, dynamic programming over break points (cost: too long, too many words, a break where the
+  // last word would show < hold s, breaking off punctuation); a spoken number is never split
+  const chunks=[];const sents=[];let cs=[];idx.forEach((i,n)=>{cs.push(i);const nx=idx[n+1];if(nx==null||/[.?!]$/.test(WORDS[i].w)||nx!==i+1){sents.push(cs);cs=[];}});
+  for(const S of sents){const n=S.length,best=Array(n+1).fill(1e9),from=Array(n+1).fill(0);best[0]=0;
+    for(let e=1;e<=n;e++)for(let b=Math.max(0,e-max-2);b<e;b++){if(best[b]>=1e9)continue;
+      const ws=S.slice(b,e),last=S[e-1],nx=S[e];if(nx!=null&&inNumber(last,nx))continue;
+      const L=ws.map(k=>WORDS[k].w).join(' ').length,gap=nx!=null?WORDS[nx].s-WORDS[last].s:9;
+      const c=1+(L>maxChars?(L-maxChars)*4:0)+(ws.length>max?(ws.length-max)*6:0)+(gap<hold?(hold-gap)*40:0)
+             +(nx!=null&&!/[,:]$/.test(WORDS[last].w)?.8:0)+(ws.length===1&&n>1?1.5:0);
+      if(best[b]+c<best[e]){best[e]=best[b]+c;from[e]=b;}}
+    const cut=[];for(let e=n;e>0;e=from[e])cut.unshift(S.slice(from[e],e));chunks.push(...cut);}
+  const next=i=>WORDS[i+1]?WORDS[i+1].s:1e9;
+  const win=chunks.map((c,k)=>{const l=c[c.length-1],nxc=chunks[k+1]?WORDS[chunks[k+1][0]].s:1e9;
+    return [WORDS[c[0]].s-.02,Math.min(nxc-.03,Math.max(WORDS[l].s+.45,Math.min(WORDS[l].e+.6,next(l)-.05)))];});
+  const els=chunks.map(c=>c.map(i=>{const sp=document.createElement('span');sp.textContent=WORDS[i].w;sp.style.display='inline-block';return sp;}));
+  let shown=-1;
+  return {box,chunks,seek(t,off=false){const k=off?-1:win.findIndex(([a,b])=>t>=a&&t<b);
+    if(k!==shown){box.replaceChildren(...(k<0?[]:els[k]));shown=k;box.style.fontSize=fs+'px';   // the whole chunk, laid out once
+      for(let f=fs;k>=0&&box.scrollWidth>ZONES.CAP.w&&f>fs*.6;f-=2)box.style.fontSize=f+'px';}   // fit width once per chunk
+    if(k<0){plate.style.opacity=0;return;}const [,end]=win[k],fo=1-seg(t,end-.06,end);
+    chunks[k].forEach((i,j)=>{const w=WORDS[i],sp=els[k][j],p=E.oB(seg(t,w.s-.02,w.s+.18)),on=t>=w.s-.02;
+      const nxt=chunks[k][j+1],newest=on&&(nxt==null||t<WORDS[nxt].s-.02);
+      sp.style.color=newest?'var(--accent)':'#fff';sp.style.opacity=on?clamp(p*2.4)*fo:0;
+      sp.style.transform=`translateY(${(1-p)*14}px) scale(${.9+.1*p})`;});
+    const vis=els[k].filter(sp=>+sp.style.opacity>.02);
+    if(!vis.length){plate.style.opacity=0;return;}
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const sp of vis){x0=Math.min(x0,box.offsetLeft+sp.offsetLeft);y0=Math.min(y0,box.offsetTop+sp.offsetTop);
+      x1=Math.max(x1,box.offsetLeft+sp.offsetLeft+sp.offsetWidth);y1=Math.max(y1,box.offsetTop+sp.offsetTop+sp.offsetHeight);}
+    const pad=parseFloat(box.style.fontSize)*.45;Object.assign(plate.style,{left:(x0-pad)+'px',top:(y0-pad*.45)+'px',width:(x1-x0+2*pad)+'px',height:(y1-y0+pad*.9)+'px',
+      opacity:Math.max(...vis.map(sp=>+sp.style.opacity))});}};}
+function tall0(){return H/W>1.2;}
+
+// ================================================================= END CARD — the CTA the narrator says, designed
+// EndCard(stage,{logo:'file:///abs/logo.png'|null, line1:'Follow <profile> for more videos like this.',
+//   line2:'And to learn how,', keyword:'<KEYWORD>', verb:'Comment', follow:'Follow', WORDS, t0})
+// WORDS = the spoken words of the CTA (same voice as the narration) → line1/line2 build word by word on them, the
+// "+ Follow" pill appears on the first word, the keyword pill lands EXACTLY on the spoken keyword. Centred in the safe
+// box, ≥ 0.8 s hold after the last word. Captions must be OFF while it's on screen (the text is already there), and
+// hide the other scenes when t ≥ t0 (show(S,false)) so the layout check doesn't see the picture underneath.
+function EndCard(stage,{logo=null,line1='',line2='',keyword='',verb='Comment',follow='Follow',WORDS=[],t0=0,bg='#050817'}={}){
+  const ec=div(stage,'scene','',null);ec.style.background=bg;ec.style.zIndex=900;
+  const big=tall0()?82:64,mid=tall0()?66:52,G=tall0()?40:28;
+  const col=div(ec,'el',`left:${SB.x}px;top:${SB.y}px;width:${SB.w}px;height:${SB.h}px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${G}px;text-align:center`);
+  let lg=null;if(logo){lg=document.createElement('img');lg.src=logo;lg.style.cssText=`width:${Math.min(560,SB.w*.7)}px;filter:invert(1)`;col.appendChild(lg);}
+  const fol=div(col,'',`display:flex;align-items:center;gap:12px;border:3px solid var(--accent);color:#fff;font-weight:800;font-size:${mid*.9}px;padding:14px 44px 18px;border-radius:999px`,'<span style="color:var(--accent)">+</span> '+follow);fol.dataset.block=1;
+  const mk=(txt,fs,c)=>{const d=div(col,'',`font-weight:800;font-size:${fs}px;line-height:1.06;letter-spacing:-.03em;color:${c}`);d.dataset.block=1;
+    d.innerHTML=txt.split(' ').map(w=>`<span style="display:inline-block">${w}</span>`).join(' ');return [...d.children];};
+  const L1=mk(line1,big,'#fff'),L2=line2?mk(line2,mid,'rgba(255,255,255,.86)'):[];
+  const pill=div(col,'',`display:flex;align-items:center;gap:18px;background:var(--accent);color:#0a0a0a;font-weight:800;font-size:${big*.92}px;padding:22px 40px 26px 34px;border-radius:999px;white-space:nowrap`,
+    `<svg width="62" height="56" viewBox="0 0 72 66"><path d="M10 4h52a8 8 0 0 1 8 8v28a8 8 0 0 1-8 8H30L14 62V48h-4a8 8 0 0 1-8-8V12a8 8 0 0 1 8-8z" fill="#0a0a0a"/></svg><span>${verb} <b class="kw" style="display:inline-block">${keyword}</b></span>`);pill.dataset.block=1;
+  const kw=pill.querySelector('.kw'),spans=[...L1,...L2],norm=w=>w.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'');
+  let k=0;const times=spans.map((sp,i)=>{const n=norm(sp.textContent);for(let j=k;j<WORDS.length;j++)if(norm(WORDS[j].w)===n){k=j+1;return WORDS[j].s;}return t0+.3+i*.18;});
+  const kwT=(WORDS.find(w=>norm(w.w)===norm(keyword))||{s:t0+3}).s, verbT=(WORDS.find(w=>norm(w.w)===norm(verb))||{s:kwT-.3}).s;
+  let fitted=false;const fit=()=>{if(fitted)return;fitted=true;let f=big*.92;   // keep pill and lines inside the safe width
+    while(pill.offsetWidth>SB.w*.9&&f>30){f-=2;pill.style.fontSize=f+'px';}
+    for(const d of [L1[0]?.parentElement,L2[0]?.parentElement])if(d)while(d.scrollWidth>SB.w&&parseFloat(getComputedStyle(d).fontSize)>30)d.style.fontSize=(parseFloat(getComputedStyle(d).fontSize)-2)+'px';};
+  return {seek(t){const on=t>=t0;ec.style.display=on?'block':'none';if(!on)return;fit();ec.style.opacity=E.o5(seg(t,t0,t0+.25));
+    if(lg)lg.style.opacity=E.o5(seg(t,t0,t0+.5));const fp=E.oB(seg(t,times[0]-.05,times[0]+.35));fol.style.transform=`scale(${Math.max(0,fp)})`;
+    spans.forEach((sp,i)=>{const p=E.o5(seg(t,times[i]-.04,times[i]+.3));sp.style.opacity=p;sp.style.transform=`translateY(${(1-p)*24}px)`;});
+    const pp=E.oB(seg(t,verbT-.05,verbT+.4));pill.style.transform=`scale(${Math.max(0,pp)})`;
+    const kp=seg(t,kwT-.03,kwT+.12);kw.style.opacity=.25+.75*kp;kw.style.transform=`scale(${1+.06*Math.sin(Math.PI*seg(t,kwT,kwT+.35))})`;
+    const ring=Math.max(0,t-kwT-.3)%1.6/1.6;pill.style.boxShadow=t>kwT+.3?`0 0 0 ${ring*34}px rgba(92,173,245,${.45*(1-ring)})`:'none';}};}
+
+// ================================================================= TIMELINE (named marks drive audio + VO)
+const MARK={T1:0, T2:4.0, END:11.0};
+const DUR=14.0;
+window.MARK=MARK; window.DUR=DUR;
+
+// ---- S1 title card: state the concept in plain words (stranger must get it in ~1 s)
+const S1=scene();
+const h1=HL(S1.c,['Your one-line','concept here.'],`left:${LY.title.x}px;top:${LY.title.y}px;width:${LY.title.w}px;font-size:${LY.title.fs}px;text-align:${LY.align}`);
+const s1sub=div(S1.c,'el mono',`left:${LY.title.x}px;top:${LY.title.y+LY.title.fs*2.4}px;width:${LY.title.w}px;text-align:${LY.align};font-size:${LY.sub.fs*.7}px;color:var(--muted)`,'Subtitle / context');
+// ---- S2 main beat: ONE read path
+const S2=scene();
+const CB=fit(ZONES.VIS,LY.card.w/LY.card.h);   // hero visual sized to the VIS band — never under the headline or captions
+const card=div(S2.c,'el',`width:${CB.w}px;height:${CB.h}px;background:#fff;border:1px solid var(--rule);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.08)`);
+card.dataset.role='focal';card.dataset.name='card';   // layout check: no text may sit on it, the frame may not cut it
+// ---- S3 end card: what it solves + clear CTA
+const S3=scene();
+const h3=HL(S3.c,['Product name.'],`left:${LY.title.x}px;top:${LY.title.y}px;width:${LY.title.w}px;font-size:${LY.title.fs}px;text-align:${LY.align}`);
+const cta=div(S3.c,'el',`left:${LY.align==='center'?SB.cx:LY.title.x}px;top:${LY.title.y+LY.title.fs*1.6}px;transform:translateX(${LY.align==='center'?-50:0}%);padding:.55em 1em;border-radius:999px;background:var(--accent);color:#fff;font-weight:600;font-size:${LY.sub.fs}px`,'Call to action →');
+
+function seek(t){
+  show(S1,t<MARK.T2); show(S2,t>=MARK.T2&&t<MARK.END); show(S3,t>=MARK.END);
+  if(t<MARK.T2){hlA(h1,t,.2,MARK.T2-.45);fade(s1sub,t,.9,MARK.T2-.4);}
+  if(t>=MARK.T2&&t<MARK.END){const u=t-MARK.T2,p=spr(u,1.6,.6);
+    T(card,{x:CB.x+CB.w/2,y:CB.y+CB.h/2+(1-p)*120,o:clamp(u*3),s:lerp(.96,1,p)});
+    cam(S2.c,W/2,H/2,lerp(1,1.04,seg(u,0,MARK.END-MARK.T2)));}           // slow push keeps the frame alive
+  if(t>=MARK.END){hlA(h3,t,MARK.END+.1);fade(cta,t,MARK.END+.7);if(LY.align==='center')cta.style.transform+=' translateX(-50%)';}
+}
+window.seek=seek;
+// ---- boot: wait for fonts (and any <img>) before declaring ready
+Promise.all([document.fonts.ready,
+  // preload every weight/family the video uses — a weight first used mid-video loads late and re-flows text (captions jumped)
+  ...['400','500','600','700','800'].map(w=>document.fonts.load(`${w} 48px Inter`)),...['400','600'].map(w=>document.fonts.load(`${w} 28px 'JetBrains Mono'`)),...[...document.images].map(i=>i.complete?1:new Promise(r=>i.onload=i.onerror=r))]).then(()=>{
+  seek(+Q.get('t')||0); window.ready=true;
+  if(Q.get('play')){const t0=performance.now();const loop=()=>{seek(((performance.now()-t0)/1000)%DUR);requestAnimationFrame(loop)};loop();}
+});
+</script></body></html>

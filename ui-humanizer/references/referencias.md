@@ -82,6 +82,20 @@ Mostre ao usuário com os screenshots e deixe ele escolher, misturar ou descarta
 - Converta em tokens (fase 4 do SKILL.md): famílias, escala, cores com origem, raio, espaçamento, regras de imagem.
 - Se o usuário quer componentes "baseados nos designs que gosto" (fluxo do @Hermes_sts), gere um componente por padrão observado, com nome descritivo (`MenuBoard`, `StoreHours`, `PhotoStrip`), e mostre lado a lado com a referência.
 
-## 7. Registro
+## 7. Da imagem ao código (quando há uma imagem pra seguir)
+
+Quando o usuário trouxe um print/mockup, ou você gerou imagens de seção pra uma página nova inteira, não vá direto pro código "inspirado" nela. Extraia o sistema primeiro, depois construa pra bater.
+
+Use este caminho quando: o usuário deu uma imagem de referência, **ou** você vai desenhar uma página nova/redesign completo e tem ferramenta de gerar imagem. Pule em edição pequena, componente isolado, ou trabalho dentro de um kit que já existe. Diga em uma linha qual caminho pegou.
+
+1. **Tenha a referência.** Use a imagem do usuário, ou gere imagens em escala de seção (hero e seções-chave como imagens separadas, não um board comprimido). O hero tem que estar legível em tamanho de laptop pequeno; regenere se texto ou espaço estiver ilegível.
+2. **Extraia o sistema e escreva antes de codar:** paleta (hex), famílias e escala de tipo, degraus de espaço, grade e divisão de colunas, regra de raio e borda, estilo de botão, e o que **evitar** — confira a própria referência contra o `tells.md`, porque imagem gerada também vem com tell.
+3. **Implemente pra bater.** Siga a referência de perto; não "melhore" ela de volta pra um template. Mapeie os valores extraídos pros tokens do projeto (token do projeto vence quando conflita com a imagem).
+4. **Compare** screenshot do que você fez contra a referência, na mesma tela; conserte o que ficou diferente.
+5. **Grave** o sistema extraído no `DESIGN.md` do projeto se ele virar a cara oficial.
+
+A intensidade é a mesma da leitura da página (ver `metodo/calibragem.md`): não há eixo separado pra imagem.
+
+## 8. Registro
 
 Salve as fichas e screenshots aprovados numa pasta do projeto (ex.: `design/referencias/`) se o usuário quiser, pra próxima sessão não recomeçar do zero.

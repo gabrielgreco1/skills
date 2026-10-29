@@ -229,6 +229,27 @@ Ver `copy.md`. Inclui headline abstrata, subtítulo que repete o headline, "Por 
 
 ---
 
+## Extensão · tells de fora da thread
+
+A thread não citou estes, mas são a mesma escolha média aparecendo em detalhes, e aparecem muito em UI gerada depois que a pessoa já tirou o roxo e os cards. Marcados como extensão, no mesmo formato compacto. Classe pela regra de sempre (A age sozinho, B pesa em grupo, C só com A/B por perto).
+
+| ID | Tell | Como reconhecer / no código | Troca | Pode ficar quando |
+|---|---|---|---|---|
+| E1 (A) | Faixa de atmosfera no hero | tira mono/caixa alta com substantivos abstratos ligados por ponto ou barra ("MARCA · MOVIMENTO · ESPAÇO", "TYPE / FORM / MOTION") na borda do hero | borda vazia, ou um fato concreto do produto ali | nunca como default |
+| E2 (A) | "Role pra baixo" / scroll cue | "Scroll", "Role pra explorar", chevron ou mouse pulando; `animate-bounce` perto do fim do hero | corte: a página já rola, a próxima seção que convide pelo conteúdo | nunca |
+| E3 (A) | Cursor piscando em texto estático | caret ou bloco piscando em headline ou terminal fake que ninguém edita; `@keyframes blink` em texto não editável | caret só onde dá pra digitar | campo de texto real, terminal real |
+| E4 (A) | Pílula de versão/estado no hero | "BETA", "V0.6", "EARLY ACCESS", "INVITE-ONLY" no hero sem o brief ser de lançamento | status vai pra nav ou link de changelog; o hero vende o produto | anúncio real e datado de lançamento |
+| E5 (A) | Faixa de hora/clima/local | chip tipo "Lisboa 14:23 · 18°C" ou relógio ao vivo que não é o produto | corte; hora e clima só se o produto é sobre lugar, viagem ou tempo | produto de lugar/viagem/tempo |
+| E6 (B) | Fundo de grade ou bolinha decorativa | grade de linhas, papel milimetrado, pontos em `radial-gradient` esmaecendo na borda com `mask-image`, atrás de seção que não é canvas | superfície lisa, imagem real ou espaço | ferramenta que mede/alinha, com a grade nítida no workspace |
+| E7 (B) | Número decorativo de seção | "01 — Descobrir", "02", "03" em seções que não são passos | numere só o que se lê/faz em ordem; senão o título basta | onboarding, processo com etapas reais |
+| E8 (B) | Fileira de números grandes sem fonte | 3+ números enormes com legenda minúscula ("99%", "2.4M", "150+") logo abaixo do hero | um número só, real, com uma frase de contexto; senão corte | métrica real e atribuída |
+| E9 (B) | Easing de mola/salto em UI de rotina | `animate-bounce`, `easeOutBack`/elastic, `cubic-bezier` com y < 0 ou > 1 em diálogo, menu, chip | ease-out curto que assenta uma vez | marca explicitamente lúdica, nunca em diálogo |
+| E10 (B) | Virada de tema no meio da página | página clara que cai numa faixa escura (ou o contrário) no meio do scroll sem motivo de marca | escolha claro, escuro ou sistema uma vez; faixa contrária só pra um CTA/mídia real | uma única quebra para CTA ou mídia |
+| E11 (C) | Duas bordas na mesma borda | borda de 1px **e** sombra larga definindo o mesmo card; ou `border-t` + `border-b` em toda linha de lista | escolha um tratamento de borda: fio **ou** elevação; um divisor só entre linhas | junto com B2/B9 |
+| E12 (C) | Raio extremo em card pequeno | card pequeno com `rounded-3xl`/`rounded-[2rem+]` espremendo o conteúdo numa bolha | raio por papel: controle pequeno, card médio; raio grande é pra pill e mídia | junto com B5 |
+| E13 (C) | Texto cinza sobre superfície colorida | `bg-*-600 text-gray-400`, cinza neutro sobre painel saturado | tinta clara, ou um tom da própria cor da superfície; confira o contraste | — |
+| E14 (C) | Corpo justificado ou em caixa alta | `text-align: justify` ou `uppercase` em parágrafo | texto alinhado à esquerda, caixa de frase; caixa alta só em rótulo curto | rótulo curto, nunca parágrafo |
+
 ## Trocas que são o mesmo default (não faça)
 
 | Saindo de | Não vá pra | Porque |

@@ -49,6 +49,18 @@ RULES = [
      r"(?i)(comece agora|get started( for free| today)?|sem complica|solu[cç][aã]o completa|tudo em um s[oó] lugar|por que escolher|chega de |sem cart[aã]o de cr[eé]dito|seamless(ly)?|supercharge|unlock (the|your)|elevate your|all-in-one|everything you need|transform[ea]? (your|seu|sua)|revolucion|potencializ|next[- ]level|trusted by|join thousands|\+\s?\d{1,3}[.,]?\d{3}\+? (clientes|usu[aá]rios|users|customers))"),
     ("C4", "CTA em caixa alta com seta",
      r"(?i)>\s*(SAIBA MAIS|CONSULTE AQUI|ACESSE AQUI|VER MAIS|LEARN MORE)\s*(→|&rarr;|<)"),
+    ("E2", "scroll cue ('role pra baixo' / chevron pulando)",
+     r"(?i)(scroll (down|to explore)|role (pra|para) (baixo|explorar)|animate-bounce)"),
+    ("E4", "pilula de versao/estado no hero (BETA, V0.x, EARLY ACCESS)",
+     r"(?i)>\s*(beta|early access|invite[- ]only|v0?\.\d|coming soon)\s*<"),
+    ("E6", "fundo de grade/bolinha decorativo",
+     r"(repeating-linear-gradient|mask-image:[^;]*radial-gradient|bg-\[radial-gradient|bg-grid|\[background-size:[^\]]*px_[^\]]*px\])"),
+    ("E9", "easing de mola/salto",
+     r"(easeOutBack|easeInBack|\belastic\b|backOut|cubic-bezier\([^)]*,\s*-[0-9.])"),
+    ("E13", "texto cinza sobre superficie colorida",
+     r"(?i)bg-(indigo|violet|purple|blue|emerald|rose|teal|sky|cyan)-(500|600|700|800)[^\"'`]*text-(gray|zinc|slate|neutral|stone)-(300|400|500)"),
+    ("E14", "corpo justificado ou caixa alta",
+     r"(text-align:\s*justify|text-justify|\btext-justify\b)"),
 ]
 COMPILED = [(i, d, re.compile(p)) for i, d, p in RULES]
 

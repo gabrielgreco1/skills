@@ -10,9 +10,13 @@ description: |
   eyebrow acima do título, palavra do título em gradiente ou em outra cor, card com borda
   lateral, chip com bolinha pulsando, emoji no lugar de ícone, roxo do Tailwind, pill em
   tudo, glassmorphism, "como funciona" em 3 passos, Playfair com itálico no fim, site sem
-  imagem, cara de SaaS pra padaria. Baseado nas 51 respostas à thread de @greco_dev (out/2026).
+  imagem, cara de SaaS pra padaria. Calibra a intensidade por intenção da página (convencer,
+  operar, ler, mostrar) com três eixos observáveis, traz os números concretos de tipo, espaço,
+  cor e hierarquia, um acervo de padrões de composição e motion que valem a pena, um briefing de
+  design persistente por projeto e revisão renderizada com acessibilidade. Baseado nas 51
+  respostas à thread de @greco_dev (out/2026).
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
   source: https://x.com/greco_dev/status/2112133909458960896
 ---
 
@@ -42,9 +46,14 @@ Leia conforme a fase:
 
 | Arquivo | Quando ler |
 |---|---|
+| `metodo/calibragem.md` | Fases 0 e 1. A intenção da página e os três eixos de intensidade (Variação, Movimento, Densidade) que decidem **o quanto** empurrar, mais a frase de leitura que fecha o brief. |
 | `references/tells.md` | Sempre que for construir ou auditar. Catálogo completo: cada tell com como reconhecer, assinatura no código, por que a IA faz, quem citou, troca e quando pode ficar. |
-| `references/referencias.md` | Fase 3. Como buscar referências no Pinterest, Dribbble, Awwwards etc. pelo Chrome, o que extrair de cada uma e como virar decisão. |
+| `references/referencias.md` | Fase 3. Como buscar referências no Pinterest, Dribbble, Awwwards etc. pelo Chrome, o que extrair de cada uma, como virar decisão, e o fluxo de partir de uma imagem pro código. |
+| `craft/fundamentos.md` | Fase 4. Os números concretos do "o que fazer no lugar": escala de tipo, escala de espaço, estrutura de cor, hierarquia, medida de linha, movimento, modo escuro. |
+| `craft/padroes.md` | Fase 5, quando a leitura pede Movimento/Variação mais altos. Movimentos de composição e motion que valem buscar, cada um com o ponto em que vira tell. |
 | `references/copy.md` | Sempre que houver texto na UI. Palavras e estruturas de copy que entregam IA (PT e EN). |
+| `projeto/briefing-de-design.md` | Página nova, redesign ou mudança de tokens. O `DESIGN.md` do projeto como fonte de verdade persistente, com bloco de tokens e registro de decisões. |
+| `qa/revisao.md` | Fase 6. Revisão da página renderizada em três telas, checagem de acessibilidade e formato do laudo por severidade. |
 | `references/casos.md` | Pra calibrar o olho. Três sites reais citados na thread, dissecados tell por tell. |
 | `references/outros-formatos.md` | Docs, slides, dashboards, apps, e-mails. A mesma assinatura fora da landing page. |
 | `references/cobertura.md` | Mapa de cada um dos 51 comentários pra onde ele entrou nesta skill. |
@@ -60,8 +69,9 @@ Use todas as fases ao criar do zero. Ao revisar algo existente, vá direto pra f
 ### Fase 0 · Triagem
 
 - O que é: landing, site institucional, e-commerce, app logado, dashboard, doc, deck? Cada um tem convenções próprias que **não** são tells (um app logado pode ter sidebar e cards; um dashboard pode ter grid de KPIs).
+- **O que a pessoa vem fazer nesta página:** convencer, operar, ler ou mostrar? É isto, não o que a empresa vende, que decide quanto empurrar. A landing de uma ferramenta é "convencer"; a doc dela é "ler". Cada intenção começa de um preset de intensidade — ver `metodo/calibragem.md`. Num app logado (operar), o kit e os tokens ficam; não reestilize o que o usuário já aprendeu só pra "parecer menos IA".
 - Quanto importa: um protótipo interno não precisa da fase 3 inteira. Um site público de marca precisa.
-- O que já existe: design system, marca, fotos, conteúdo, site anterior. Leia antes de propor.
+- O que já existe: design system, marca, fotos, conteúdo, site anterior, e um `DESIGN.md` do projeto (ver `projeto/briefing-de-design.md`). Leia antes de propor.
 
 ### Fase 1 · Brief (escreva antes de qualquer pixel)
 
@@ -72,6 +82,8 @@ Responda em poucas linhas e mostre ao usuário:
 3. **Material real disponível.** Fotos, prints do produto, dados, rostos, endereço, cardápio, preços, depoimentos verdadeiros. "Ausência de imagens" é dos tells mais citados (@joaquimcassano, @vborotoo). Se não há material, peça ao usuário. Se ainda assim não houver, use placeholders explícitos (`[foto da fachada]`, `[print do painel]`) e avise. Nunca preencha o vazio com cards de ícone, gradiente ou ilustração genérica.
 4. **O que não pode faltar e o que é opcional.** Corta excesso de texto e seções de enchimento (@vborotoo).
 5. **Restrições.** Marca, cores obrigatórias, acessibilidade, stack, prazo.
+
+Feche o brief com a **frase de leitura** (ver `metodo/calibragem.md`): uma linha que fixa página, público, intenção, linguagem, stack e os três níveis de intensidade (Variação, Movimento, Densidade). É ela que deixa a auditoria da fase 6 objetiva — se o resultado não bate com a intensidade declarada, é erro verificável, não gosto. Se o projeto vai durar (página nova, redesign), grave essas decisões no `DESIGN.md` do projeto em vez de deixá-las só nesta sessão.
 
 ### Fase 2 · Rascunho antes do código (o "desenhar sem IA")
 
@@ -95,7 +107,7 @@ Leia `references/referencias.md` e siga. Resumo:
 
 ### Fase 4 · Design system mínimo
 
-Derivado da direção escolhida, não de defaults:
+Derivado da direção escolhida, não de defaults. Os **números concretos** de cada item abaixo (escala de tipo com razão, escala de espaço de 4px, estrutura de cor, medida de linha, durações) estão em `craft/fundamentos.md` — use-os quando o projeto não tiver os seus. A ideia por trás: a escolha da IA é média porque é uniforme (um raio, uma sombra, um tamanho); a de um designer é desigual de propósito, e a escala é o que cria essa desigualdade com sistema.
 - **Tipografia:** 1–2 famílias com motivo (da marca, do setor, da referência). Escala com contraste de tamanho de verdade. Nada de "fonte padrão + título minimalista" (@Lukekw_) nem 10 fontes (@El_Sinisttro).
 - **Cor:** de onde ela vem (fachada, embalagem, produto, setor, foto principal). Uma cor de acento usada pouco. Sem roxo do Tailwind por default (@Cirilorde), sem gradiente por default, sem cada coisa de uma cor.
 - **Forma:** escala de raio pequena e consistente. Pill só onde tem motivo. Uma regra de borda e sombra, não cinco.
@@ -114,10 +126,12 @@ Construa seguindo o rascunho e o design system, consultando `references/tells.md
 - Animação só se explica uma mudança de estado.
 - Copy com fato concreto: o que é, pra quem, quanto, onde, com número e nome reais vindos do usuário. Nunca invente cliente, número, depoimento, logo ou prêmio.
 
+Quando a leitura pede Movimento ou Variação mais altos (convencer, mostrar), não invente o efeito na hora: escolha **um** movimento-assinatura e 2–4 apoios quietos de `craft/padroes.md`, e confira a linha "vira tell quando" de cada um antes de mandar. Numa página de operar ou ler, quase nenhum entra.
+
 ### Fase 6 · Auditoria
 
 1. **Detector:** rode `scripts/audit.py` no arquivo ou pasta. Ele acha a assinatura de código dos tells (eyebrow, gradiente em texto, borda lateral, pulse, emoji, roxo, glass, hover, pill, gradiente de fundo, fontes da moda, copy de template). É ponto de partida: confira cada hit, alguns são legítimos.
-2. **Visual:** se der, abra a página no Chrome e tire screenshot do topo, do meio e do fim, em desktop e mobile. Vários tells só aparecem renderizados: layout padrão, cards todos iguais, falta de imagem, cara de SaaS, seções com o mesmo ritmo, mockup flutuante.
+2. **Visual:** se der, abra a página no Chrome e revise em três telas (desktop/tablet/mobile) seguindo `qa/revisao.md`. Vários tells só aparecem renderizados: layout padrão, cards todos iguais, falta de imagem, cara de SaaS, seções com o mesmo ritmo, mockup flutuante. Confira também se o resultado bate com a intensidade declarada na frase de leitura, e rode a checagem de acessibilidade do mesmo arquivo (que você nunca piora pra parecer menos IA). Laudo por severidade: crítico/alto/médio/nit.
 3. **Catálogo:** passe pelo `references/tells.md` marcando cada tell encontrado, fortes primeiro. A justifica mudança com uma ocorrência; B pesa quando aparece com outros; C só se já houver A ou B.
 4. **Copy:** passe pelo `references/copy.md`. Pra parágrafos longos, combine com a skill `humanizer`.
 5. **Checklist final** (abaixo).

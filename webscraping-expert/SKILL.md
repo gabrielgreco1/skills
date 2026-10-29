@@ -1,6 +1,6 @@
 ---
 name: webscraping-expert
-description: Expert data extraction guide. Starts with a structured intake to understand the target. Always tries the cheapest path first (HTTP requests → browser fingerprinting → headless browser). Covers TLS/HTTP fingerprint impersonation (curl_cffi, primp, rnet), the modern stealth-browser stack (patchright, camoufox, nodriver), the anti-bot vendor matrix (Cloudflare, DataDome, Kasada, Akamai) with per-vendor bypass, CAPTCHA/Turnstile solving, proxy networks and managed unblockers (Zyte API, Web Unlocker) with geo-targeting, structured-data extraction (JSON-LD/microdata/OpenGraph), AI/LLM-driven and adaptive extraction (scrapling, crawl4ai, firecrawl), site-stack playbooks (Next.js App Router/RSC, Tableau, OData, PX-Web, SDMX, ASP.NET, GraphQL, SPAs), browser request injection, live request interception, and clean OOP architecture standards for scrapers and extracted data. Use whenever the user wants to scrape/extract data from a website or API.
+description: Expert data extraction guide. Starts with a structured intake to understand the target. Always tries the cheapest path first (HTTP requests → browser fingerprinting → headless browser). Covers TLS/HTTP fingerprint impersonation (curl_cffi, primp, rnet), the modern stealth-browser stack (patchright, camoufox, nodriver), the anti-bot vendor matrix (Cloudflare, DataDome, Kasada, Akamai) with per-vendor bypass, CAPTCHA/Turnstile solving, proxy networks and managed unblockers (Zyte API, Web Unlocker) with geo-targeting, structured-data extraction (JSON-LD/microdata/OpenGraph), AI/LLM-driven and adaptive extraction (scrapling, crawl4ai, firecrawl), site-stack playbooks (Next.js App Router/RSC, Natural for Ajax, Tableau, OData, PX-Web, SDMX, ASP.NET, GraphQL, SPAs), exact stateful HAR replay with request-fidelity validation, browser request injection, live request interception, and clean OOP architecture standards for scrapers and extracted data. Use whenever the user wants to scrape/extract data from a website or API.
 ---
 
 # Webscraping Expert
@@ -950,6 +950,7 @@ The skill is organized by problem domain. Each folder has a `README.md` describi
 ├── browser-automation/     ← Playwright / patchright / camoufox when HTTP alone isn't enough
 ├── reliability/            ← concurrency, resumable, idempotent runs, retries
 ├── parsing/                ← structured data (JSON-LD), HTML / PDF / table extraction, schema drift
+├── scripts/                ← deterministic protocol validators and HAR request-fidelity tools
 └── reference/              ← libraries, AI/LLM extraction, anti-patterns, medallion architecture, self-critique
 ```
 
@@ -959,6 +960,7 @@ The skill is organized by problem domain. Each folder has a `README.md` describi
 |---|---|
 | Run the intake | `approach/README.md` (pick the flow matching the user's experience level) |
 | Find what to scrape on a new target | `discovery/README.md` |
+| Reproduce a stateful HAR request exactly | `discovery/har-exact-replay.md`, then `scripts/natural_for_ajax.py` for content-based Natural request discovery, protocol round-trips, and semantic diffs |
 | Recognize a known site stack | `site-patterns/README.md` |
 | Set up a proxy or managed unblocker | `networking/proxy-zyte.md` (default), `networking/proxy-providers.md` |
 | Diagnose a block / identify the anti-bot vendor | `anti-bot/anti-bot-vendors.md`, `anti-bot/error-decoders.md` |

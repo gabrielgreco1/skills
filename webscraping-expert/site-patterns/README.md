@@ -17,6 +17,7 @@ Each file follows the same skeleton: **When you see this** → **How it works** 
 | `graphql.md` | POST to `/graphql` (or `/api/graphql`, `/query`) with body containing `query`/`variables`/`operationName` or `extensions.persistedQuery`. HTTP 200 + `{"data": ..., "errors": [...]}` shape. |
 | `legacy-cms.md` | ColdFusion (`.cfm`), classic ASP (`.asp`), JSP (`.jsp`), or any portal returning `HTTP 200 + "Error"` page on invalid sessions. |
 | `nextjs-app-router-rsc.md` | `self.__next_f.push([...])` in HTML, or requests with `RSC: 1` + `Accept: text/x-component`. React Server Component flight data — the modern Next.js shape (vs Pages Router `__NEXT_DATA__`). |
+| `natural-for-ajax.md` | `/servlet/easynat-app`, Natural page HTML, and `/servlet/Connector` POSTs with `SESSIONID`, `XML`, and `STAMP`; stateful priming and length-prefixed event streams. |
 | `odata.md` | `$metadata`, `$filter`/`$select`/`$top`/`$skip`, envelope `{"value":[...],"@odata.nextLink":...}` (v4) or `{"d":{"results":...}}` (v2/v3). Stats offices (CBS). |
 | `paginated-facet-search-api.md` | Endpoint with `rows/start`, `refine.<field>=<value>`, response `{records, nhits, facet_groups}`. Hard offset cap (~10k) → slice by facet. OpenDataSoft Explore. |
 | `pxweb.md` | Path `/api/v1/<lang>/...` at a statistics bureau; POST a variable selection, get JSON-stat back. StatFi / SCB / SSB (Nordic offices). |

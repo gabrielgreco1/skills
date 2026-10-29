@@ -19,6 +19,8 @@ Pra prosa longa (blog, sobre, artigos), use também a skill `humanizer`. Este ar
 | CTA genérico | "Comece agora", "Saiba mais", "Consulte aqui", "Ver como funciona", "Get started" | Verbo + objeto específico: "Montar a escala de março", "Ver o cardápio" |
 | Prova social genérica | "+10.000 clientes satisfeitos", depoimento sem sobrenome/foto/empresa, logos "trusted by" de empresas que não são clientes | Só prova real, com nome e fonte vindos do usuário. Nunca invente |
 | "Para todos" | Fileira de setores: "Restaurantes, Bares, Clínicas, Hospitais, Farmácias..." | Escolha o público principal e fale com ele |
+| "Não é X. É Y." | "Não é mais um dashboard. É um centro de comando." "Não é uma ferramenta. É uma plataforma." | Diga o que faz numa frase direta; se a diferença importa, nomeie a alternativa e a diferença concreta |
+| Marca com ponto no fim | logotipo ou wordmark terminando em ponto decorativo ("Acme.", "Linear.", "`<CYBER./>`") | Tire o ponto; ponto é de frase, não de nome de produto. É um tique de marca inventada por LLM |
 
 ## Palavras e expressões
 
@@ -26,7 +28,7 @@ Fracas sozinhas; em grupo, denunciam.
 
 **PT:** solução completa, tudo em um só lugar, de forma simples, sem complicação, praticidade, eficiência, centralizado, potencialize, transforme, revolucione, simplifique, otimize, eleve, desbloqueie, inteligente(s) (em "Insights Inteligentes"), sua jornada, próximo nível, feito para você, pensado para, experiência única, de ponta a ponta, perfeito para.
 
-**EN:** seamless, effortless, supercharge, unlock, elevate, empower, streamline, all-in-one, built for, designed for, next-level, game-changer, powered by AI, everything you need, in one place, get started, join thousands, trusted by, simple transparent pricing.
+**EN:** seamless, effortless, supercharge, unlock, elevate, empower, streamline, all-in-one, built for, designed for, next-level, game-changer, powered by AI, everything you need, in one place, get started, join thousands, trusted by, simple transparent pricing, revolutionize, cutting-edge, harness, in today's fast-paced world, built for the future.
 
 ## Formatação de texto na UI
 

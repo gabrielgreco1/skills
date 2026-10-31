@@ -83,7 +83,7 @@ load before `window.ready=true`. One WebGL canvas for all 3D scenes; switch scen
     storyboard / transitions (each MARK −0.12/+0.06/+0.30 s) / phone-size / encoded contact sheets + `review_report.md`.
 11c. **Campaign matrix** (campaign.md): `python3 $S/validate_campaign.py source/campaign.json` →
     `python3 $S/render_campaign.py source/timeline.html --campaign source/campaign.json --out final --audio source/sound.wav [--draft]`.
-12. **Reveal**: `open -R <file>` for each deliverable (or `open <folder>`).
+12. **Reveal**: `bash $S/reveal.sh <file>` for each deliverable (or the `final/` folder).
 
 ## Machine etiquette
 Run renders as `nice -n 15 python3 $S/render.py … --workers 3`, in slices (`--range`) for long videos, and delete

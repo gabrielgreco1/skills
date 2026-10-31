@@ -326,7 +326,8 @@ captions, `pop/vo/kv/hlB`).
 - People judge **animation, not stills or written plans**: never ask for approval on keyframes or a storyboard doc.
   Check stills yourself (contact sheets), then show a rendered video (a 30 fps half-res draft is fine for direction).
 - For several versions, use **independent agents per version** (different story angles) to avoid idea bias.
-- After rendering, **reveal the files in Finder** (`open -R` each file, or `open` the folder) and ask which one is best.
+- After rendering, **reveal the files** (`bash $SKILL/scripts/reveal.sh <file>`; Finder / Explorer / xdg-open) and ask
+  which one is best.
 - **Exception, quality "Maximum" only**: the style-frame sheet goes to the user once, with one question about the
   direction, before animating (max-quality.md §4). A direction change after animating costs hours.
 - **QC loop before showing anything** (QC "Extreme", from quality Maximum or High = all of it, every render):

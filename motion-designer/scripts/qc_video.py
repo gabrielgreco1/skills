@@ -11,7 +11,9 @@
 5. LOUDNESS      — integrated LUFS / true peak (target −14.5 LUFS, TP ≤ −1)
 6. SHEETS        — 4 fps contact sheets → qc_out/sheets/sNN.png  (Read EVERY sheet: overlaps, cut objects, empty
                    frames, grey frames, unreadable text, captions over images)
-pip install mlx-whisper (Apple Silicon) — first run downloads whisper-large-v3-turbo (~1.6 GB).
+Whisper backend: mlx-whisper on Apple Silicon, otherwise openai-whisper (pip install openai-whisper, CPU or CUDA).
+Override the weights with QC_WHISPER_MODEL=tiny|base|small|medium|large|turbo (default turbo). First run downloads
+large-v3-turbo (~1.6 GB).
 """
 import argparse, json, os, re, subprocess, unicodedata, wave, difflib
 import numpy as np
@@ -27,9 +29,15 @@ if a.vo:
     cc = np.fft.irfft(np.fft.rfft(x[:n], 2 * n) * np.conj(np.fft.rfft(y[:n], 2 * n))); lag = (int(np.argmax(np.r_[cc[-800:], cc[:800]])) - 800) / 8000
     print(f'1 AUDIO OFFSET  {lag * 1000:+.1f} ms', 'OK' if abs(lag) < .02 else '!! FIX')
 try:
-    import mlx_whisper
+    try:
+        import mlx_whisper
+        _transcribe = lambda p: mlx_whisper.transcribe(p, path_or_hf_repo='mlx-community/whisper-large-v3-turbo', language=a.lang)
+    except ImportError:
+        import torch, whisper
+        _model = whisper.load_model(os.environ.get('QC_WHISPER_MODEL', 'turbo'))
+        _transcribe = lambda p: _model.transcribe(p, language=a.lang, fp16=torch.cuda.is_available())
     ff('-i', a.video, '-vn', '-ac', '1', '-ar', '16000', f'{O}/a16.wav')
-    r = mlx_whisper.transcribe(f'{O}/a16.wav', path_or_hf_repo='mlx-community/whisper-large-v3-turbo', language=a.lang)
+    r = _transcribe(f'{O}/a16.wav')
     said = r['text'].strip(); open(f'{O}/spoken.txt', 'w').write(said); print('2 SPOKEN:', said)
     if a.script:
         ref = re.sub(r'\[[^\]]*\]', '', open(a.script).read())
@@ -37,7 +45,7 @@ try:
         for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, A, B, autojunk=False).get_opcodes():
             if tag != 'equal': print(f'   DIFF {tag:7s} script[{" ".join(A[i1:i2])}]  heard[{" ".join(B[j1:j2])}]')
         print('   (numbers come back as digits and "pra"→"para" — ignore those; look for changed meaning, doubled/missing words)')
-except ImportError: print('2 SKIPPED — pip install mlx-whisper')
+except ImportError: print('2 SKIPPED — install mlx-whisper (Apple Silicon) or openai-whisper')
 if a.words:
     W = json.load(open(a.words)); W = W['words'] if isinstance(W, dict) else W
     bad = [(p_['e'], b_['s'] - p_['e'], p_['w'], b_['w']) for p_, b_ in zip(W, W[1:]) if b_['s'] - p_['e'] > .35 and not re.search(r'[.?!:]$', p_['w'])]

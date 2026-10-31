@@ -5,19 +5,29 @@ real photos + Three.js 3D + word-by-word captions + natural narration + sound de
 frame-perfect from code (no After Effects), then checked frame by frame before you see it.
 
 ## Install
-1. Copy this folder to `~/.claude/skills/motion-designer/` (or your project's `.claude/skills/`).
-2. Tools (macOS, Apple Silicon recommended):
+1. Copy this folder into your agent's skills directory — `~/.claude/skills/motion-designer/` (Claude Code),
+   `~/.agents/skills/motion-designer/` (Agents-compatible clients), `~/.omp/skills/` (omp), or your project's
+   equivalent.
+2. Tools — macOS, Linux and Windows (git-bash/WSL). `scripts/check_env.sh` prints the exact command for your system:
    ```bash
-   brew install ffmpeg
+   # system packages
+   brew install ffmpeg potrace            # macOS
+   sudo pacman -S ffmpeg potrace          # Arch (apt-get / dnf equivalents work the same)
+   # python
    pip3 install numpy pillow playwright edge-tts && python3 -m playwright install chromium
-   pip3 install mlx-whisper rembg        # recommended: transcript QC + photo cut-outs
+   # recommended extras: transcript QC + photo cut-outs
+   pip3 install mlx-whisper               # Apple Silicon (fast)
+   pip3 install openai-whisper            # any platform, CPU or CUDA — qc_video.py picks whichever is installed
+   pip3 install rembg
    ```
    Then run `bash scripts/check_env.sh`.
 3. Optional — ElevenLabs (much more natural narration): a key with *Text to Speech* + *Voices: Read*, on a paid plan
    (free plans can't use library voices via the API and have no commercial licence). The skill asks for it and stores
    it in `~/.config/elevenlabs/api_key`.
-4. In Claude Code: "make a motion video about …" or `/motion-designer`. The first question is the language
+4. In your agent: "make a motion video about …" or `/motion-designer`. The first question is the language
    (Português / English / Español / other); everything after follows it.
+5. Rendering on a headless box: `NO_OPEN=1` stops the skill from revealing files in the file manager
+   (`scripts/reveal.sh` is what does it — Finder, Explorer or `xdg-open`).
 
 ## What's inside
 | path | what |

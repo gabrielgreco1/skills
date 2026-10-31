@@ -2,10 +2,11 @@
 # vectorize_logo.sh logo.png OUT_PREFIX [#hexcolor ...]
 # Turns a raster logo (the usual PNG from a website) into a crisp SVG with potrace, so it can be scaled to full screen
 # without pixels. Writes OUT_PREFIX-white.svg, OUT_PREFIX-black.svg and one file per extra colour given.
-# Needs: brew install potrace. Works for flat single-colour marks; for multi-colour logos trace each colour separately.
+# Needs: potrace (brew install potrace · sudo pacman -S potrace · sudo apt-get install potrace).
+# Works for flat single-colour marks; for multi-colour logos trace each colour separately.
 set -e
 SRC=$1; OUT=$2; shift 2
-command -v potrace >/dev/null || { echo "potrace missing -> brew install potrace"; exit 1; }
+command -v potrace >/dev/null || { echo "potrace missing -> install it with your package manager (brew/pacman/apt)"; exit 1; }
 python3 - "$SRC" "$OUT.bmp" <<'PY'
 import sys
 from PIL import Image, ImageFilter

@@ -3,7 +3,7 @@
 All three work the same way underneath, the `seek(t)` model: every frame is a pure function of time, a headless
 browser draws the frame at time t, FFmpeg encodes. So timing, copy, colours and layout can change without
 regenerating anything. The agent picks one per video (SKILL.md Step 2b) — never ask the user which engine. Everything else in this skill (intake, brand extraction, narration,
-SFX, craft.md, QC, reveal in Finder) applies to every engine.
+SFX, craft.md, QC, reveal) applies to every engine.
 
 | | Skill timeline | HyperFrames | Remotion |
 |---|---|---|---|

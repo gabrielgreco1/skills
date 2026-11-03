@@ -48,7 +48,12 @@ What's inside (absolute paths come from this skill's folder — call it `$SKILL`
 1. This skill is tuned for **Opus 5.5** (`claude-opus-5-5`). If you are not running on it, tell the user in one line:
    *"This skill works best on Opus 5.5 — switch with `/model claude-opus-5-5` (I'll continue either way)."*
    You cannot switch models yourself mid-session; the skill frontmatter requests it where the client supports that.
-2. Run `scripts/check_env.sh`. If something is missing, show the install commands and offer to run them.
+2. Run `scripts/check_env.sh`. It detects your package manager and pip entry point; if something is missing, show its
+   install commands and offer to run them.
+3. Platform: macOS, Linux and Windows (git-bash/WSL) all work. Reveal files with
+   `bash $SKILL/scripts/reveal.sh <path>` — Finder, Explorer or `xdg-open` depending on the OS; `NO_OPEN=1` skips the
+   reveal on headless boxes. Whisper QC runs on `mlx-whisper` (Apple Silicon) or `openai-whisper` (CPU/CUDA) — either.
+   If your client has no `AskUserQuestion` equivalent, ask the same options as a numbered list.
 
 ## Step 1 — Intake
 
@@ -252,7 +257,7 @@ Mark a "(Recommended)" option in Q7 and Q8 from the idea, the type (product/stor
 ### Q11–Q12 — Voice + captions (third step, only when there is narration)
 **Q11 Voice**
 - **ElevenLabs**: `python3 $SKILL/scripts/el_voices.py --lang <pt|en|es…> --accent <brazilian|american…> --out
-  <root>/voice-tests` (free: library search + preview MP3s), opens the folder in Finder — the user picks by ear from the
+  <root>/voice-tests` (free: library search + preview MP3s), reveals the folder in the file manager — the user picks by ear from the
   numbered list (name · style · voice_id). Natives of the video language only. Then A/B one short line on 2–4 settings (craft.md §7), and only then generate the full read
   with `scripts/el_tts.py --budget`. Report credits spent after every call.
   Recipe that won: `python3 $SKILL/scripts/el_tts.py script.txt --voice <id> --budget <n>` (defaults: `eleven_v3`, stability 0.3, similarity 0.8, seed 7, the WHOLE script in one request — one continuous
@@ -382,7 +387,8 @@ natively · VO lines fit their windows · `ffprobe` shows the right size/fps/dur
 
 ## Step 4 — Reveal + pick
 
-1. `open -R` every rendered video (one call per file) so Finder shows them; also `open` the options folder.
+1. `bash $SKILL/scripts/reveal.sh` every rendered video (one call per file) so the file manager shows them; also reveal
+   the options folder.
 2. List the versions in chat: letter, title, one-sentence story, duration, path.
 3. Ask with `AskUserQuestion`: header "Best version", question *"Which version came out best?"*, one option per version
    (+ "None — rethink" when ≤3 versions). Use multiSelect=false.
@@ -393,8 +399,10 @@ natively · VO lines fit their windows · `ffprobe` shows the right size/fps/dur
 - **Campaign** (if chosen): `render_campaign.py source/timeline.html --campaign source/campaign.json --out <root>/final --audio
   source/sound.wav` → every hook × format × CTA, posters, `manifest.json`; review one export per format (+ every hook
   and CTA once) with `review_frames.py`; the delivery is `final/` + review reports, after the user ticks approval.
-- Render the remaining platform sizes/audio variants into `final/<variant>/<slug>_<platform>_<W>x<H>.mp4`, reveal in Finder.
-- Update `<root>/README.md` (and the product's series log at `~/Desktop/<product>-motion/README.md`): final paths,
+- Render the remaining platform sizes/audio variants into `final/<variant>/<slug>_<platform>_<W>x<H>.mp4`, then reveal
+  them (`scripts/reveal.sh`).
+- Update `<root>/README.md` (and the product's series log at `~/Desktop/<product>-motion/README.md`, or
+  `~/motion/<product>-motion/` on machines without a Desktop folder): final paths,
   status, what was rejected and why.
 - Offer the **post caption** in chat (not a file): first line = the hook, 2–4 short lines of the best facts, the CTA
   ("Comment <KEYWORD>…"), a save/share nudge, then after a few dots the image credits for every CC BY / BY-SA asset

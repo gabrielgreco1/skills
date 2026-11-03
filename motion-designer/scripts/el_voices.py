@@ -4,7 +4,8 @@
   python3 el_voices.py --lang en --accent american --gender male --use narrative_story
   python3 el_voices.py --lang es --n 20
 
-Writes <out>/NN_<G>_<Name>.mp3 + <out>/voices.md (name · style · voice_id) and opens the folder in Finder.
+Writes <out>/NN_<G>_<Name>.mp3 + <out>/voices.md (name · style · voice_id) and reveals the folder with reveal.sh
+(Finder / Explorer / xdg-open; NO_OPEN=1 skips).
 Needs a key with "Voices: Read" (+ "Text to Speech" to generate later). Library (community) voices need a PAID plan
 to be used through the API — a free plan returns 402 "Free users cannot use library voices via the API" (no charge).
 Professional voices (PVC) run on eleven_v3 with use_pvc_as_ivc (el_tts.py --pvc-as-ivc).
@@ -30,4 +31,4 @@ for i, v in enumerate(d['voices'][:a.n], 1):
     if v.get('preview_url'): subprocess.run(['curl', '-sfL', v['preview_url'], '-o', f])
     md.append(f"| {i:02d} | {v['name']} | {v.get('gender')}/{v.get('age')} | {v.get('descriptive') or ''} | {v.get('use_case') or ''} | `{v['voice_id']}` |")
     print(f"{i:02d}  {v['name'][:48]:48s} {v.get('gender', ''):6s} {v.get('use_case') or '':24s} {v['voice_id']}")
-open(f'{a.out}/voices.md', 'w').write('\n'.join(md) + '\n'); subprocess.run(['open', a.out]) if os.environ.get('NO_OPEN') is None else None
+open(f'{a.out}/voices.md', 'w').write('\n'.join(md) + '\n'); subprocess.run(['bash', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'reveal.sh'), a.out]) if os.environ.get('NO_OPEN') is None else None
